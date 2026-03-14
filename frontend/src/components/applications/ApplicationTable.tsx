@@ -133,13 +133,13 @@ export function ApplicationTable({
 
       {/* Pagination */}
       {pagination.totalPages > 1 && (
-        <div className="flex items-center justify-between">
+        <div className="grid grid-cols-3 items-center">
           <p className="text-sm text-muted-foreground">
             Showing {(page - 1) * pagination.limit + 1}–
             {Math.min(page * pagination.limit, pagination.total)} of{' '}
             {pagination.total}
           </p>
-          <div className="flex gap-2">
+          <div className="flex justify-center gap-2">
             <Button
               variant="outline"
               size="sm"

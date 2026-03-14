@@ -57,9 +57,19 @@ export function useDeleteApplication() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (id: string) => applicationsApi.delete(id),
-    onSuccess: () => {
+    onSuccess: (_, id) => {
       qc.invalidateQueries({ queryKey: APPLICATIONS_KEY });
       qc.invalidateQueries({ queryKey: STATS_KEY });
+      try {
+        const raw = localStorage.getItem('kanban-order');
+        if (raw) {
+          const order = JSON.parse(raw);
+          for (const col of Object.keys(order)) {
+            order[col] = order[col].filter((itemId: string) => itemId !== id);
+          }
+          localStorage.setItem('kanban-order', JSON.stringify(order));
+        }
+      } catch {}
     },
   });
 }

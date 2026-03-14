@@ -22,11 +22,11 @@ export function DashboardPage() {
 
   const now = new Date();
   const in7Days = addDays(now, 7);
-  const followUps = recentData?.data.filter(
+  const followUps = (recentData?.data.filter(
     (app) =>
       app.followUpAt &&
       isWithinInterval(parseISO(app.followUpAt), { start: now, end: in7Days })
-  ) ?? [];
+  ) ?? []).sort((a, b) => parseISO(a.followUpAt!).getTime() - parseISO(b.followUpAt!).getTime());
 
   const firstName = user?.name.split(' ')[0] ?? 'there';
 

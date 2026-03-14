@@ -47,7 +47,7 @@ export function LinkContactTab({ applicationId, alreadyLinked, onSuccess }: Link
         />
       </div>
 
-      <div className="max-h-64 overflow-y-auto space-y-1 rounded-md border p-1">
+      <div className="max-h-64 overflow-y-auto show-scrollbar space-y-1 rounded-md border p-1">
         {isLoading ? (
           <div className="flex items-center justify-center py-8">
             <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
