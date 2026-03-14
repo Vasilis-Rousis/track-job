@@ -27,7 +27,9 @@ type ViewMode = 'table' | 'kanban';
 type SortOption = 'appliedAt_desc' | 'appliedAt_asc' | 'company_asc' | 'updatedAt_desc';
 
 export function ApplicationsPage() {
-  const [view, setView] = useState<ViewMode>('table');
+  const [view, setView] = useState<ViewMode>(
+    () => (localStorage.getItem('applications-view') as ViewMode) ?? 'table'
+  );
   const [search, setSearch] = useState('');
   const [status, setStatus] = useState<ApplicationStatus | ''>('');
   const [sort, setSort] = useState<SortOption>('appliedAt_desc');
@@ -113,14 +115,14 @@ export function ApplicationsPage() {
           <Button
             variant={view === 'table' ? 'secondary' : 'ghost'}
             size="sm"
-            onClick={() => setView('table')}
+            onClick={() => { setView('table'); localStorage.setItem('applications-view', 'table'); }}
           >
             <LayoutList className="h-4 w-4" />
           </Button>
           <Button
             variant={view === 'kanban' ? 'secondary' : 'ghost'}
             size="sm"
-            onClick={() => setView('kanban')}
+            onClick={() => { setView('kanban'); localStorage.setItem('applications-view', 'kanban'); }}
           >
             <LayoutGrid className="h-4 w-4" />
           </Button>

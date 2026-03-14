@@ -12,7 +12,7 @@ export function ApplicationCard({ application }: ApplicationCardProps) {
 
   return (
     <div
-      className="cursor-pointer rounded-md border bg-white p-3 shadow-sm transition-shadow hover:shadow-md"
+      className="cursor-pointer rounded-md border bg-card p-3 shadow-sm transition-shadow hover:shadow-md"
       onClick={() => navigate(`/applications/${application.id}`)}
     >
       <p className="font-semibold text-sm leading-tight">{application.company}</p>

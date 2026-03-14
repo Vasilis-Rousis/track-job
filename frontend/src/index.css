@@ -53,6 +53,30 @@
   * {
     @apply border-border;
   }
+  .overflow-y-auto::-webkit-scrollbar,
+  .overflow-y-scroll::-webkit-scrollbar {
+    display: none;
+  }
+  .overflow-y-auto,
+  .overflow-y-scroll {
+    scrollbar-width: none;
+  }
+  .overflow-x-auto::-webkit-scrollbar {
+    height: 6px;
+  }
+  .overflow-x-auto::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  .overflow-x-auto::-webkit-scrollbar-thumb {
+    background: hsl(var(--border));
+    border-radius: 9999px;
+  }
+  .overflow-x-auto::-webkit-scrollbar-thumb:hover {
+    background: hsl(var(--muted-foreground));
+  }
+  .overflow-x-auto::-webkit-scrollbar-button {
+    display: none;
+  }
   body {
     @apply bg-background text-foreground;
   }

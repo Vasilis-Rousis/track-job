@@ -163,14 +163,26 @@ export function ApplicationForm({ application, onSuccess }: ApplicationFormProps
       <div className="grid grid-cols-2 gap-4">
         <div className="space-y-2">
           <Label htmlFor="appliedAt">Applied Date *</Label>
-          <Input id="appliedAt" type="date" {...register('appliedAt')} />
+          <Input
+            id="appliedAt"
+            type="date"
+            onKeyDown={(e) => e.preventDefault()}
+            onClick={(e) => { try { (e.currentTarget as HTMLInputElement).showPicker(); } catch {} }}
+            {...register('appliedAt')}
+          />
           {errors.appliedAt && (
             <p className="text-xs text-destructive">{errors.appliedAt.message}</p>
           )}
         </div>
         <div className="space-y-2">
           <Label htmlFor="followUpAt">Follow-Up Date</Label>
-          <Input id="followUpAt" type="date" {...register('followUpAt')} />
+          <Input
+            id="followUpAt"
+            type="date"
+            onKeyDown={(e) => e.preventDefault()}
+            onClick={(e) => { try { (e.currentTarget as HTMLInputElement).showPicker(); } catch {} }}
+            {...register('followUpAt')}
+          />
         </div>
       </div>
 
