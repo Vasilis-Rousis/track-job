@@ -9,7 +9,9 @@ export const createContactSchema = z.object({
   notes: z.string().max(5000).optional(),
 });
 
-export const updateContactSchema = createContactSchema.partial();
+export const updateContactSchema = createContactSchema.partial().extend({
+  applicationId: z.string().nullish(),
+});
 
 export type CreateContactInput = z.infer<typeof createContactSchema>;
 export type UpdateContactInput = z.infer<typeof updateContactSchema>;

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Eye, Pencil, Trash2, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Pencil, Trash2, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import {
@@ -88,7 +88,11 @@ export function ApplicationTable({
           </thead>
           <tbody>
             {applications.map((app) => (
-              <tr key={app.id} className="border-b transition-colors hover:bg-muted/25">
+              <tr
+                key={app.id}
+                className="border-b cursor-pointer transition-colors hover:bg-muted/25"
+                onClick={() => navigate(`/applications/${app.id}`)}
+              >
                 <td className="px-4 py-3 font-medium">{app.company}</td>
                 <td className="px-4 py-3 text-muted-foreground">{app.role}</td>
                 <td className="hidden px-4 py-3 text-muted-foreground lg:table-cell">
@@ -103,15 +107,8 @@ export function ApplicationTable({
                 <td className="hidden px-4 py-3 text-muted-foreground lg:table-cell">
                   {formatDate(app.followUpAt)}
                 </td>
-                <td className="px-4 py-3">
+                <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
                   <div className="flex items-center justify-end gap-1">
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => navigate(`/applications/${app.id}`)}
-                    >
-                      <Eye className="h-4 w-4" />
-                    </Button>
                     <Button
                       variant="ghost"
                       size="icon"

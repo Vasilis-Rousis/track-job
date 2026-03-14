@@ -2,5 +2,6 @@
   "watch": ["src"],
   "ext": "ts",
   "ignore": ["src/**/*.spec.ts"],
-  "exec": "ts-node --project tsconfig.json src/index.ts"
+  "exec": "ts-node --project tsconfig.json src/index.ts",
+  "legacyWatch": true
 }

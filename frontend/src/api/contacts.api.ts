@@ -6,7 +6,7 @@ export interface CreateContactData {
   title?: string;
   email?: string;
   linkedin?: string;
-  applicationId?: string;
+  applicationId?: string | null;
   notes?: string;
 }
 

@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { useForm } from 'react-hook-form';
+import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Loader2 } from 'lucide-react';
@@ -49,8 +49,7 @@ export function ApplicationForm({ application, onSuccess }: ApplicationFormProps
   const {
     register,
     handleSubmit,
-    setValue,
-    watch,
+    control,
     reset,
     formState: { errors, isSubmitting },
   } = useForm<FormData>({
@@ -58,7 +57,7 @@ export function ApplicationForm({ application, onSuccess }: ApplicationFormProps
     defaultValues: {
       company: '',
       role: '',
-      status: 'APPLIED',
+      status: 'WISHLIST',
       appliedAt: formatDateInput(new Date().toISOString()),
     },
   });
@@ -70,7 +69,7 @@ export function ApplicationForm({ application, onSuccess }: ApplicationFormProps
         role: application.role,
         location: application.location ?? '',
         jobUrl: application.jobUrl ?? '',
-        status: application.status,
+        status: application.statusHistory?.[0]?.toStatus ?? application.status,
         salary: application.salary ?? '',
         appliedAt: formatDateInput(application.appliedAt),
         followUpAt: formatDateInput(application.followUpAt),
@@ -78,8 +77,6 @@ export function ApplicationForm({ application, onSuccess }: ApplicationFormProps
       });
     }
   }, [application, reset]);
-
-  const statusValue = watch('status');
 
   const onSubmit = async (data: FormData) => {
     const payload = {
@@ -142,21 +139,24 @@ export function ApplicationForm({ application, onSuccess }: ApplicationFormProps
         </div>
         <div className="space-y-2">
           <Label>Status *</Label>
-          <Select
-            value={statusValue}
-            onValueChange={(val) => setValue('status', val)}
-          >
-            <SelectTrigger>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {ALL_STATUSES.map((s) => (
-                <SelectItem key={s} value={s}>
-                  {STATUS_LABELS[s]}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <Controller
+            control={control}
+            name="status"
+            render={({ field }) => (
+              <Select value={field.value} onValueChange={field.onChange}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {ALL_STATUSES.map((s) => (
+                    <SelectItem key={s} value={s}>
+                      {STATUS_LABELS[s]}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
+          />
         </div>
       </div>
 

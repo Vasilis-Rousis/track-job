@@ -3,7 +3,6 @@ import {
   LayoutDashboard,
   Briefcase,
   Users,
-  Settings,
   LogOut,
 } from 'lucide-react';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
@@ -16,7 +15,6 @@ const navItems = [
   { to: '/', label: 'Dashboard', icon: LayoutDashboard, end: true },
   { to: '/applications', label: 'Applications', icon: Briefcase, end: false },
   { to: '/contacts', label: 'Contacts', icon: Users, end: false },
-  { to: '/settings', label: 'Settings', icon: Settings, end: false },
 ];
 
 export function Sidebar() {
@@ -29,7 +27,7 @@ export function Sidebar() {
   };
 
   return (
-    <aside className="flex h-full w-64 flex-col border-r bg-white">
+    <aside className="flex h-full w-64 flex-col border-r bg-background">
       {/* Logo */}
       <div className="flex h-16 items-center border-b px-6">
         <Briefcase className="mr-2 h-6 w-6 text-primary" />
@@ -61,15 +59,20 @@ export function Sidebar() {
       {/* User */}
       <div className="border-t p-4">
         <div className="flex items-center gap-3">
-          <Avatar className="h-8 w-8">
-            <AvatarFallback className="text-xs">
-              {user ? getInitials(user.name) : 'U'}
-            </AvatarFallback>
-          </Avatar>
-          <div className="min-w-0 flex-1">
-            <p className="truncate text-sm font-medium">{user?.name}</p>
-            <p className="truncate text-xs text-muted-foreground">{user?.email}</p>
-          </div>
+          <button
+            onClick={() => navigate('/settings')}
+            className="flex min-w-0 flex-1 items-center gap-3 rounded-md p-1 hover:bg-accent"
+          >
+            <Avatar className="h-8 w-8 shrink-0">
+              <AvatarFallback className="text-xs">
+                {user ? getInitials(user.name) : 'U'}
+              </AvatarFallback>
+            </Avatar>
+            <div className="min-w-0 text-left">
+              <p className="truncate text-sm font-medium">{user?.name}</p>
+              <p className="truncate text-xs text-muted-foreground">{user?.email}</p>
+            </div>
+          </button>
           <Button
             variant="ghost"
             size="icon"

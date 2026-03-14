@@ -15,6 +15,7 @@ import {
 } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { useAuthStore } from '@/store/authStore';
+import { useThemeStore, type Theme } from '@/store/themeStore';
 import { authApi } from '@/api/auth.api';
 import { toast } from '@/hooks/use-toast';
 import { getAxiosErrorMessage } from '@/utils/helpers';
@@ -37,8 +38,15 @@ const passwordSchema = z
 type ProfileFormData = z.infer<typeof profileSchema>;
 type PasswordFormData = z.infer<typeof passwordSchema>;
 
+const THEME_OPTIONS: { value: Theme; label: string; description: string }[] = [
+  { value: 'system', label: 'System', description: 'Follow your OS setting' },
+  { value: 'light', label: 'Light', description: 'Always light' },
+  { value: 'dark', label: 'Dark', description: 'Always dark' },
+];
+
 export function SettingsPage() {
   const { user, setAuth, token } = useAuthStore();
+  const { theme, setTheme } = useThemeStore();
 
   const profileForm = useForm<ProfileFormData>({
     resolver: zodResolver(profileSchema),
@@ -87,6 +95,35 @@ export function SettingsPage() {
         <h1 className="text-2xl font-bold">Settings</h1>
         <p className="text-muted-foreground">Manage your account preferences.</p>
       </div>
+
+      <Separator />
+
+      {/* Appearance */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Appearance</CardTitle>
+          <CardDescription>Choose how JobTracker looks to you.</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-3 gap-3">
+            {THEME_OPTIONS.map((opt) => (
+              <button
+                key={opt.value}
+                type="button"
+                onClick={() => setTheme(opt.value)}
+                className={`rounded-lg border-2 p-3 text-left transition-colors ${
+                  theme === opt.value
+                    ? 'border-primary bg-primary/5'
+                    : 'border-border hover:border-muted-foreground'
+                }`}
+              >
+                <p className="text-sm font-medium">{opt.label}</p>
+                <p className="text-xs text-muted-foreground">{opt.description}</p>
+              </button>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
 
       <Separator />
 

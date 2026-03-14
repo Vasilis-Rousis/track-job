@@ -41,7 +41,7 @@ export function ContactCard({ contact }: ContactCardProps) {
 
   return (
     <>
-      <div className="flex items-start gap-4 rounded-lg border bg-white p-4">
+      <div className="flex items-start gap-4 rounded-lg border bg-card p-4">
         <Avatar>
           <AvatarFallback>{getInitials(contact.name)}</AvatarFallback>
         </Avatar>

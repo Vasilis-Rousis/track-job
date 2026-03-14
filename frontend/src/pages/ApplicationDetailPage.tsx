@@ -35,8 +35,10 @@ import {
 import { StatusBadge } from '@/components/applications/StatusBadge';
 import { ApplicationForm } from '@/components/applications/ApplicationForm';
 import { ContactForm } from '@/components/contacts/ContactForm';
+import { LinkContactTab } from '@/components/contacts/LinkContactTab';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { useApplication, useDeleteApplication } from '@/hooks/useApplications';
-import { useContacts } from '@/hooks/useContacts';
+import { useContacts, useDeleteContact } from '@/hooks/useContacts';
 import { formatDate } from '@/utils/helpers';
 import { toast } from '@/hooks/use-toast';
 
@@ -50,6 +52,7 @@ export function ApplicationDetailPage() {
   const { data: app, isLoading } = useApplication(id!);
   const { data: contacts } = useContacts({ applicationId: id });
   const deleteApplication = useDeleteApplication();
+  const deleteContact = useDeleteContact();
 
   const handleDelete = async () => {
     if (!id) return;
@@ -223,7 +226,7 @@ export function ApplicationDetailPage() {
           {contacts && contacts.length > 0 ? (
             <div className="space-y-3">
               {contacts.map((contact) => (
-                <div key={contact.id} className="flex items-start gap-3 rounded-md border p-3">
+                <div key={contact.id} className="flex items-start justify-between gap-3 rounded-md border p-3">
                   <div>
                     <p className="font-medium text-sm">{contact.name}</p>
                     {contact.title && (
@@ -238,6 +241,22 @@ export function ApplicationDetailPage() {
                       </a>
                     )}
                   </div>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-7 w-7 shrink-0 text-muted-foreground hover:text-destructive"
+                    title="Delete contact"
+                    onClick={async () => {
+                      try {
+                        await deleteContact.mutateAsync(contact.id);
+                        toast({ title: 'Contact deleted' });
+                      } catch {
+                        toast({ variant: 'destructive', title: 'Failed to delete contact' });
+                      }
+                    }}
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </Button>
                 </div>
               ))}
             </div>
@@ -284,10 +303,25 @@ export function ApplicationDetailPage() {
           <DialogHeader>
             <DialogTitle>Add Contact</DialogTitle>
           </DialogHeader>
-          <ContactForm
-            applicationId={id}
-            onSuccess={() => setAddContactOpen(false)}
-          />
+          <Tabs defaultValue="new">
+            <TabsList className="w-full">
+              <TabsTrigger value="new" className="flex-1">Create New</TabsTrigger>
+              <TabsTrigger value="link" className="flex-1">Link Existing</TabsTrigger>
+            </TabsList>
+            <TabsContent value="new">
+              <ContactForm
+                applicationId={id}
+                onSuccess={() => setAddContactOpen(false)}
+              />
+            </TabsContent>
+            <TabsContent value="link">
+              <LinkContactTab
+                applicationId={id!}
+                alreadyLinked={contacts ?? []}
+                onSuccess={() => setAddContactOpen(false)}
+              />
+            </TabsContent>
+          </Tabs>
         </DialogContent>
       </Dialog>
     </div>
