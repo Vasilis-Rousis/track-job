@@ -1,0 +1,88 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Status {
+  WISHLIST
+  APPLIED
+  PHONE_SCREEN
+  INTERVIEW
+  OFFER
+  REJECTED
+  WITHDRAWN
+}
+
+model User {
+  id           String        @id @default(cuid())
+  email        String        @unique
+  passwordHash String
+  name         String
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+
+  applications Application[]
+  contacts     Contact[]
+
+  @@index([email])
+}
+
+model Application {
+  id            String          @id @default(cuid())
+  userId        String
+  company       String
+  role          String
+  location      String?
+  jobUrl        String?
+  status        Status          @default(APPLIED)
+  salary        String?
+  notes         String?         @db.Text
+  appliedAt     DateTime        @default(now())
+  followUpAt    DateTime?
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+
+  user          User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  contacts      Contact[]
+  statusHistory StatusHistory[]
+
+  @@index([userId])
+  @@index([userId, status])
+  @@index([userId, appliedAt])
+}
+
+model StatusHistory {
+  id            String   @id @default(cuid())
+  applicationId String
+  fromStatus    Status?
+  toStatus      Status
+  changedAt     DateTime @default(now())
+  note          String?
+
+  application   Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+
+  @@index([applicationId])
+}
+
+model Contact {
+  id            String       @id @default(cuid())
+  userId        String
+  applicationId String?
+  name          String
+  title         String?
+  email         String?
+  linkedin      String?
+  notes         String?      @db.Text
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+
+  user          User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  application   Application? @relation(fields: [applicationId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+  @@index([applicationId])
+}
