@@ -6,7 +6,9 @@ import {
   useSensor,
   useSensors,
   useDroppable,
-  closestCorners,
+  pointerWithin,
+  rectIntersection,
+  type CollisionDetection,
   type DragStartEvent,
   type DragEndEvent,
   type DragOverEvent,
@@ -26,6 +28,12 @@ import { useUpdateApplication } from '@/hooks/useApplications';
 import { toast } from '@/hooks/use-toast';
 
 type ColumnItems = Record<ApplicationStatus, string[]>;
+
+const collisionDetection: CollisionDetection = (args) => {
+  const pointerCollisions = pointerWithin(args);
+  if (pointerCollisions.length > 0) return pointerCollisions;
+  return rectIntersection(args);
+};
 
 const emptyOrder = Object.fromEntries(ALL_STATUSES.map((s) => [s, []])) as unknown as ColumnItems;
 
@@ -239,13 +247,13 @@ export function KanbanBoard({ applications, isLoading }: KanbanBoardProps) {
   return (
     <DndContext
       sensors={sensors}
-      collisionDetection={closestCorners}
+      collisionDetection={collisionDetection}
       onDragStart={handleDragStart}
       onDragOver={handleDragOver}
       onDragEnd={handleDragEnd}
       onDragCancel={handleDragCancel}
     >
-      <div className="flex gap-4 overflow-x-auto pb-2 h-[calc(100vh-200px)]">
+      <div className="flex gap-4 overflow-x-auto pb-2 px-1 h-[calc(100vh-200px)]">
         {ALL_STATUSES.map((status) => (
           <DroppableColumn
             key={status}

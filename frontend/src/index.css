@@ -2,6 +2,12 @@
 @tailwind components;
 @tailwind utilities;
 
+::-webkit-scrollbar-button {
+  display: none;
+  height: 0;
+  width: 0;
+}
+
 @layer base {
   :root {
     --background: 0 0% 100%;
@@ -60,6 +66,26 @@
   .overflow-y-auto,
   .overflow-y-scroll {
     scrollbar-width: none;
+  }
+  .show-scrollbar::-webkit-scrollbar {
+    display: block;
+    width: 6px;
+  }
+  .show-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  .show-scrollbar::-webkit-scrollbar-thumb {
+    background: hsl(var(--border));
+    border-radius: 9999px;
+  }
+  .show-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: hsl(var(--muted-foreground));
+  }
+  .show-scrollbar::-webkit-scrollbar-button {
+    display: none;
+  }
+  .show-scrollbar {
+    scrollbar-width: auto;
   }
   .overflow-x-auto::-webkit-scrollbar {
     height: 6px;

@@ -17,11 +17,13 @@ export const createApplicationSchema = z.object({
     .string()
     .datetime()
     .optional()
+    .refine((v) => !v || new Date(v) <= new Date(), 'Applied date cannot be in the future')
     .transform((v) => (v ? new Date(v) : undefined)),
   followUpAt: z
     .string()
     .datetime()
     .optional()
+    .refine((v) => !v || new Date(v) >= new Date(new Date().toDateString()), 'Follow-up date cannot be in the past')
     .transform((v) => (v ? new Date(v) : undefined)),
 });
 

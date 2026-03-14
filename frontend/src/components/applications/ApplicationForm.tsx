@@ -29,8 +29,14 @@ const schema = z.object({
   jobUrl: z.string().url('Must be a valid URL').optional().or(z.literal('')),
   status: z.string().min(1),
   salary: z.string().optional(),
-  appliedAt: z.string().min(1, 'Applied date is required'),
-  followUpAt: z.string().optional(),
+  appliedAt: z.string().min(1, 'Applied date is required').refine(
+    (v) => !v || new Date(v) <= new Date(),
+    'Applied date cannot be in the future'
+  ),
+  followUpAt: z.string().optional().refine(
+    (v) => !v || new Date(v) >= new Date(new Date().toDateString()),
+    'Follow-up date cannot be in the past'
+  ),
   notes: z.string().optional(),
 });
 
@@ -166,6 +172,7 @@ export function ApplicationForm({ application, onSuccess }: ApplicationFormProps
           <Input
             id="appliedAt"
             type="date"
+            max={new Date().toISOString().split('T')[0]}
             onKeyDown={(e) => e.preventDefault()}
             onClick={(e) => { try { (e.currentTarget as HTMLInputElement).showPicker(); } catch {} }}
             {...register('appliedAt')}
@@ -179,6 +186,7 @@ export function ApplicationForm({ application, onSuccess }: ApplicationFormProps
           <Input
             id="followUpAt"
             type="date"
+            min={new Date().toISOString().split('T')[0]}
             onKeyDown={(e) => e.preventDefault()}
             onClick={(e) => { try { (e.currentTarget as HTMLInputElement).showPicker(); } catch {} }}
             {...register('followUpAt')}

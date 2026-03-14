@@ -185,7 +185,7 @@ export function ApplicationDetailPage() {
         </CardHeader>
         <CardContent>
           {app.statusHistory && app.statusHistory.length > 0 ? (
-            <div className="space-y-3">
+            <div className="max-h-64 overflow-y-auto show-scrollbar space-y-3">
               {app.statusHistory.map((h, i) => (
                 <div key={h.id} className="flex items-start gap-3">
                   <div className="mt-1 flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-primary/10">

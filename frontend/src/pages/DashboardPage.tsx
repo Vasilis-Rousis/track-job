@@ -14,7 +14,7 @@ export function DashboardPage() {
   const user = useAuthStore((s) => s.user);
   const { data: stats, isLoading: statsLoading } = useStats();
   const { data: recentData, isLoading: recentLoading } = useApplications({
-    sort: 'updatedAt_desc',
+    sort: 'appliedAt_desc',
     limit: 5,
   });
 
