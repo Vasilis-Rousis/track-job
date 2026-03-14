@@ -1,7 +1,21 @@
 import { z } from 'zod';
 import { Status } from '@prisma/client';
 
-export const createApplicationSchema = z.object({
+const crossFieldCheck = (data: { appliedAt?: Date; followUpAt?: Date }, ctx: z.RefinementCtx) => {
+  if (data.appliedAt && data.followUpAt) {
+    const minFollowUp = new Date(data.appliedAt);
+    minFollowUp.setDate(minFollowUp.getDate() + 1);
+    if (data.followUpAt < minFollowUp) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['followUpAt'],
+        message: 'Follow-up must be at least one day after the applied date',
+      });
+    }
+  }
+};
+
+const applicationFields = {
   company: z.string().min(1, 'Company is required').max(200),
   role: z.string().min(1, 'Role is required').max(200),
   location: z.string().max(200).optional(),
@@ -23,11 +37,18 @@ export const createApplicationSchema = z.object({
     .string()
     .datetime()
     .optional()
-    .refine((v) => !v || new Date(v) >= new Date(new Date().toDateString()), 'Follow-up date cannot be in the past')
+    .refine((v) => {
+      if (!v) return true;
+      const tomorrow = new Date();
+      tomorrow.setDate(tomorrow.getDate() + 1);
+      tomorrow.setHours(0, 0, 0, 0);
+      return new Date(v) >= tomorrow;
+    }, 'Follow-up date must be tomorrow or later')
     .transform((v) => (v ? new Date(v) : undefined)),
-});
+};
 
-export const updateApplicationSchema = createApplicationSchema.partial();
+export const createApplicationSchema = z.object(applicationFields).superRefine(crossFieldCheck);
+export const updateApplicationSchema = z.object(applicationFields).partial().superRefine(crossFieldCheck);
 
 export const applicationQuerySchema = z.object({
   status: z.nativeEnum(Status).optional(),

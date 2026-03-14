@@ -33,11 +33,25 @@ const schema = z.object({
     (v) => !v || new Date(v) <= new Date(),
     'Applied date cannot be in the future'
   ),
-  followUpAt: z.string().optional().refine(
-    (v) => !v || new Date(v) >= new Date(new Date().toDateString()),
-    'Follow-up date cannot be in the past'
-  ),
+  followUpAt: z.string().optional(),
   notes: z.string().optional(),
+}).superRefine((data, ctx) => {
+  if (!data.followUpAt) return;
+  const followUp = new Date(data.followUpAt);
+  const tomorrow = new Date();
+  tomorrow.setDate(tomorrow.getDate() + 1);
+  tomorrow.setHours(0, 0, 0, 0);
+  if (followUp < tomorrow) {
+    ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['followUpAt'], message: 'Follow-up date must be tomorrow or later' });
+    return;
+  }
+  if (data.appliedAt) {
+    const minFollowUp = new Date(data.appliedAt);
+    minFollowUp.setDate(minFollowUp.getDate() + 1);
+    if (followUp < minFollowUp) {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['followUpAt'], message: 'Follow-up must be at least one day after the applied date' });
+    }
+  }
 });
 
 type FormData = z.infer<typeof schema>;
@@ -57,6 +71,7 @@ export function ApplicationForm({ application, onSuccess }: ApplicationFormProps
     handleSubmit,
     control,
     reset,
+    watch,
     formState: { errors, isSubmitting },
   } = useForm<FormData>({
     resolver: zodResolver(schema),
@@ -67,6 +82,22 @@ export function ApplicationForm({ application, onSuccess }: ApplicationFormProps
       appliedAt: formatDateInput(new Date().toISOString()),
     },
   });
+
+  const appliedAt = watch('appliedAt');
+  const followUpMin = (() => {
+    const toLocalDateStr = (d: Date) =>
+      `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    const tomorrowStr = toLocalDateStr(tomorrow);
+    if (appliedAt) {
+      const d = new Date(`${appliedAt}T00:00:00`);
+      d.setDate(d.getDate() + 1);
+      const dayAfterApplied = toLocalDateStr(d);
+      return dayAfterApplied > tomorrowStr ? dayAfterApplied : tomorrowStr;
+    }
+    return tomorrowStr;
+  })();
 
   useEffect(() => {
     if (application) {
@@ -172,7 +203,7 @@ export function ApplicationForm({ application, onSuccess }: ApplicationFormProps
           <Input
             id="appliedAt"
             type="date"
-            max={new Date().toISOString().split('T')[0]}
+            max={(() => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; })()}
             onKeyDown={(e) => e.preventDefault()}
             onClick={(e) => { try { (e.currentTarget as HTMLInputElement).showPicker(); } catch {} }}
             {...register('appliedAt')}
@@ -186,7 +217,7 @@ export function ApplicationForm({ application, onSuccess }: ApplicationFormProps
           <Input
             id="followUpAt"
             type="date"
-            min={new Date().toISOString().split('T')[0]}
+            min={followUpMin}
             onKeyDown={(e) => e.preventDefault()}
             onClick={(e) => { try { (e.currentTarget as HTMLInputElement).showPicker(); } catch {} }}
             {...register('followUpAt')}
