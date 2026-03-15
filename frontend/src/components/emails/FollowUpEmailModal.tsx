@@ -81,7 +81,7 @@ export function FollowUpEmailModal({ application, open, onOpenChange }: FollowUp
 
   const defaultBody = `Dear [contact.name],
 
-I hope this message finds you well. I am writing to follow up on my application for the ${application.role} position at ${application.company}, which I submitted on ${formatDate(application.appliedAt)}.
+I hope this message finds you well. I am writing to follow up on my application for the ${application.role} position at ${application.company}, which I submitted on ${formatDate(application.appliedAt, 'MMMM do')}.
 
 I remain very interested in this opportunity and would love to learn about any updates regarding the hiring process.
 
