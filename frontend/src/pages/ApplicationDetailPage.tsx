@@ -11,10 +11,10 @@ import {
   Clock,
   Plus,
   Loader2,
+  Mail,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
   Dialog,
@@ -37,6 +37,7 @@ import { ApplicationForm } from '@/components/applications/ApplicationForm';
 import { ContactForm } from '@/components/contacts/ContactForm';
 import { LinkContactTab } from '@/components/contacts/LinkContactTab';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
+import { FollowUpEmailModal } from '@/components/emails/FollowUpEmailModal';
 import { useApplication, useDeleteApplication } from '@/hooks/useApplications';
 import { useContacts, useDeleteContact } from '@/hooks/useContacts';
 import { formatDate } from '@/utils/helpers';
@@ -48,6 +49,7 @@ export function ApplicationDetailPage() {
   const [editOpen, setEditOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [addContactOpen, setAddContactOpen] = useState(false);
+  const [emailOpen, setEmailOpen] = useState(false);
 
   const { data: app, isLoading } = useApplication(id!);
   const { data: contacts } = useContacts({ applicationId: id });
@@ -103,6 +105,12 @@ export function ApplicationDetailPage() {
           </div>
         </div>
         <div className="flex gap-2">
+          {app.status === 'APPLIED' && (
+            <Button variant="outline" onClick={() => setEmailOpen(true)}>
+              <Mail className="mr-2 h-4 w-4" />
+              Schedule Email
+            </Button>
+          )}
           <Button variant="outline" onClick={() => setEditOpen(true)}>
             <Pencil className="mr-2 h-4 w-4" />
             Edit
@@ -265,6 +273,13 @@ export function ApplicationDetailPage() {
           )}
         </CardContent>
       </Card>
+
+      {/* Follow-up Email Modal */}
+      <FollowUpEmailModal
+        application={app}
+        open={emailOpen}
+        onOpenChange={setEmailOpen}
+      />
 
       {/* Edit Dialog */}
       <Dialog open={editOpen} onOpenChange={setEditOpen}>

@@ -11,6 +11,9 @@ import authRoutes from './routes/auth.routes';
 import applicationRoutes from './routes/applications.routes';
 import contactRoutes from './routes/contacts.routes';
 import statsRoutes from './routes/stats.routes';
+import gmailRoutes from './routes/gmail.routes';
+import emailRoutes from './routes/email.routes';
+import { startEmailWorker } from './workers/emailWorker';
 
 const app = express();
 
@@ -37,6 +40,8 @@ app.use('/api/auth', authRoutes);
 app.use('/api/applications', applicationRoutes);
 app.use('/api/contacts', contactRoutes);
 app.use('/api/stats', statsRoutes);
+app.use('/api/gmail', gmailRoutes);
+app.use('/api/emails', emailRoutes);
 
 // 404 handler
 app.use((_req, res) => {
@@ -46,8 +51,15 @@ app.use((_req, res) => {
 // Global error handler (must be last)
 app.use(errorHandler);
 
-app.listen(Number(env.PORT), () => {
+const server = app.listen(Number(env.PORT), () => {
   console.log(`🚀 Server running on port ${env.PORT} [${env.NODE_ENV}]`);
+});
+
+const worker = startEmailWorker();
+
+process.on('SIGTERM', async () => {
+  await worker.close();
+  server.close(() => process.exit(0));
 });
 
 export default app;

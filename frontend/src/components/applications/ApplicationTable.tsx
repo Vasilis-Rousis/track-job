@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Pencil, Trash2, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Pencil, Trash2, ChevronLeft, ChevronRight, Mail } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import {
@@ -20,6 +20,7 @@ import type { Application, PaginationMeta } from '@/types';
 import { formatDate } from '@/utils/helpers';
 import { useDeleteApplication } from '@/hooks/useApplications';
 import { toast } from '@/hooks/use-toast';
+import { FollowUpEmailModal } from '@/components/emails/FollowUpEmailModal';
 
 interface ApplicationTableProps {
   applications: Application[];
@@ -39,6 +40,7 @@ export function ApplicationTable({
   const navigate = useNavigate();
   const [editApp, setEditApp] = useState<Application | null>(null);
   const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [emailApp, setEmailApp] = useState<Application | null>(null);
   const deleteApplication = useDeleteApplication();
 
   const handleDelete = async () => {
@@ -109,6 +111,16 @@ export function ApplicationTable({
                 </td>
                 <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
                   <div className="flex items-center justify-end gap-1">
+                    {app.status === 'APPLIED' && (
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        title="Schedule follow-up email"
+                        onClick={() => setEmailApp(app)}
+                      >
+                        <Mail className="h-4 w-4" />
+                      </Button>
+                    )}
                     <Button
                       variant="ghost"
                       size="icon"
@@ -174,6 +186,15 @@ export function ApplicationTable({
           )}
         </DialogContent>
       </Dialog>
+
+      {/* Follow-up Email Modal */}
+      {emailApp && (
+        <FollowUpEmailModal
+          application={emailApp}
+          open={!!emailApp}
+          onOpenChange={(v) => { if (!v) setEmailApp(null); }}
+        />
+      )}
 
       {/* Delete Confirm */}
       <AlertDialog open={!!deleteId} onOpenChange={() => setDeleteId(null)}>

@@ -9,6 +9,10 @@ const envSchema = z.object({
     .enum(['development', 'production', 'test'])
     .default('development'),
   FRONTEND_URL: z.string().default('http://localhost:5173'),
+  REDIS_URL: z.string().default('redis://redis:6379'),
+  GOOGLE_CLIENT_ID: z.string().default(''),
+  GOOGLE_CLIENT_SECRET: z.string().default(''),
+  GOOGLE_REDIRECT_URI: z.string().default('http://localhost:3000/api/gmail/callback'),
 });
 
 const parsed = envSchema.safeParse(process.env);

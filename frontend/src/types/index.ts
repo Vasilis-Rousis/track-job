@@ -80,3 +80,26 @@ export interface AuthResponse {
   token: string;
   user: User;
 }
+
+export type EmailStatus = 'PENDING' | 'SENT' | 'FAILED' | 'CANCELLED';
+
+export interface ScheduledEmail {
+  id: string;
+  userId: string;
+  applicationId: string;
+  contactIds: string[];
+  subject: string;
+  body: string;
+  scheduledFor: string;
+  status: EmailStatus;
+  sentAt?: string;
+  failReason?: string;
+  bullJobId?: string;
+  createdAt: string;
+  application?: Pick<Application, 'company' | 'role'>;
+}
+
+export interface GmailStatus {
+  connected: boolean;
+  email: string | null;
+}

@@ -1,7 +1,10 @@
+import { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Link as LinkIcon, Unlink } from 'lucide-react';
+import { useSearchParams } from 'react-router-dom';
+import { useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -17,6 +20,8 @@ import { Separator } from '@/components/ui/separator';
 import { useAuthStore } from '@/store/authStore';
 import { useThemeStore, type Theme } from '@/store/themeStore';
 import { authApi } from '@/api/auth.api';
+import { gmailApi } from '@/api/emails.api';
+import { useGmailStatus, useGmailDisconnect, GMAIL_STATUS_KEY } from '@/hooks/useEmails';
 import { toast } from '@/hooks/use-toast';
 import { getAxiosErrorMessage } from '@/utils/helpers';
 
@@ -47,6 +52,42 @@ const THEME_OPTIONS: { value: Theme; label: string; description: string }[] = [
 export function SettingsPage() {
   const { user, setAuth, token } = useAuthStore();
   const { theme, setTheme } = useThemeStore();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const qc = useQueryClient();
+  const { data: gmailStatus, isLoading: gmailLoading } = useGmailStatus();
+  const gmailDisconnect = useGmailDisconnect();
+
+  useEffect(() => {
+    const gmailParam = searchParams.get('gmail');
+    if (gmailParam === 'connected') {
+      toast({ title: 'Gmail connected successfully' });
+      qc.invalidateQueries({ queryKey: GMAIL_STATUS_KEY });
+    } else if (gmailParam === 'error') {
+      toast({ variant: 'destructive', title: 'Gmail connection failed', description: 'Please try again.' });
+    }
+    if (gmailParam) {
+      setSearchParams({}, { replace: true });
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const handleConnectGmail = async () => {
+    try {
+      const { url } = await gmailApi.getAuthUrl();
+      window.location.href = url;
+    } catch (err) {
+      toast({ variant: 'destructive', title: 'Error', description: getAxiosErrorMessage(err) });
+    }
+  };
+
+  const handleDisconnectGmail = async () => {
+    try {
+      await gmailDisconnect.mutateAsync();
+      toast({ title: 'Gmail disconnected' });
+    } catch (err) {
+      toast({ variant: 'destructive', title: 'Error', description: getAxiosErrorMessage(err) });
+    }
+  };
 
   const profileForm = useForm<ProfileFormData>({
     resolver: zodResolver(profileSchema),
@@ -122,6 +163,50 @@ export function SettingsPage() {
               </button>
             ))}
           </div>
+        </CardContent>
+      </Card>
+
+      <Separator />
+
+      {/* Gmail Integration */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Gmail Integration</CardTitle>
+          <CardDescription>Connect your Gmail account to send scheduled follow-up emails.</CardDescription>
+        </CardHeader>
+        <CardContent>
+          {gmailLoading ? (
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <Loader2 className="h-4 w-4 animate-spin" />
+              Checking connection…
+            </div>
+          ) : gmailStatus?.connected ? (
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium">Connected</p>
+                <p className="text-xs text-muted-foreground">{gmailStatus.email}</p>
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleDisconnectGmail}
+                disabled={gmailDisconnect.isPending}
+              >
+                {gmailDisconnect.isPending
+                  ? <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  : <Unlink className="mr-2 h-4 w-4" />}
+                Disconnect
+              </Button>
+            </div>
+          ) : (
+            <div className="flex items-center justify-between">
+              <p className="text-sm text-muted-foreground">No Gmail account connected.</p>
+              <Button variant="outline" size="sm" onClick={handleConnectGmail}>
+                <LinkIcon className="mr-2 h-4 w-4" />
+                Connect Gmail
+              </Button>
+            </div>
+          )}
         </CardContent>
       </Card>
 
