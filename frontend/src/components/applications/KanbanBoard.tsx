@@ -232,7 +232,7 @@ export function KanbanBoard({ applications, isLoading }: KanbanBoardProps) {
 
   if (isLoading) {
     return (
-      <div className="flex gap-4 overflow-x-auto pb-2 h-[calc(100vh-200px)]">
+      <div className="flex gap-4 overflow-x-auto pb-2 h-full">
         {ALL_STATUSES.map((s) => (
           <div key={s} className="w-60 flex-shrink-0 space-y-2">
             <Skeleton className="h-6 w-24" />
@@ -253,7 +253,7 @@ export function KanbanBoard({ applications, isLoading }: KanbanBoardProps) {
       onDragEnd={handleDragEnd}
       onDragCancel={handleDragCancel}
     >
-      <div className="flex gap-4 overflow-x-auto pb-2 px-1 h-[calc(100vh-200px)]">
+      <div className="flex gap-4 overflow-x-auto pb-2 px-1 h-full">
         {ALL_STATUSES.map((status) => (
           <DroppableColumn
             key={status}

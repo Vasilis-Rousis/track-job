@@ -37,10 +37,10 @@ export function ApplicationsPage() {
   const [addOpen, setAddOpen] = useState(false);
 
   const { data, isLoading } = useApplications({
-    search: search || undefined,
-    status: status || undefined,
-    sort,
-    page,
+    search: view === 'kanban' ? undefined : search || undefined,
+    status: view === 'kanban' ? undefined : status || undefined,
+    sort: view === 'kanban' ? undefined : sort,
+    page: view === 'kanban' ? undefined : page,
     limit: view === 'kanban' ? 100 : 10,
   });
 
@@ -48,13 +48,31 @@ export function ApplicationsPage() {
   const pagination = data?.pagination ?? { total: 0, page: 1, limit: 10, totalPages: 0 };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 h-full flex flex-col">
       <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold">Applications</h1>
-          <p className="text-muted-foreground">
-            {pagination.total} total application{pagination.total !== 1 ? 's' : ''}
-          </p>
+        <div className="flex items-center gap-3">
+          <div>
+            <h1 className="text-2xl font-bold">Applications</h1>
+            <p className="text-muted-foreground">
+              {pagination.total} total application{pagination.total !== 1 ? 's' : ''}
+            </p>
+          </div>
+          <div className="flex gap-1 rounded-md border p-1 ml-2">
+            <Button
+              variant={view === 'table' ? 'secondary' : 'ghost'}
+              size="sm"
+              onClick={() => { setView('table'); localStorage.setItem('applications-view', 'table'); }}
+            >
+              <LayoutList className="h-4 w-4" />
+            </Button>
+            <Button
+              variant={view === 'kanban' ? 'secondary' : 'ghost'}
+              size="sm"
+              onClick={() => { setView('kanban'); localStorage.setItem('applications-view', 'kanban'); }}
+            >
+              <LayoutGrid className="h-4 w-4" />
+            </Button>
+          </div>
         </div>
         <Dialog open={addOpen} onOpenChange={setAddOpen}>
           <DialogTrigger asChild>
@@ -72,62 +90,47 @@ export function ApplicationsPage() {
         </Dialog>
       </div>
 
-      {/* Filters */}
-      <div className="flex flex-wrap gap-3">
-        <div className="relative flex-1 min-w-48">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-          <Input
-            placeholder="Search company or role..."
-            value={search}
-            onChange={(e) => { setSearch(e.target.value); setPage(1); }}
-            className="pl-9"
-          />
-        </div>
+      {/* Filters — only shown in table view */}
+      {view === 'table' && (
+        <div className="flex flex-wrap gap-3">
+          <div className="relative flex-1 min-w-48">
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              placeholder="Search company or role..."
+              value={search}
+              onChange={(e) => { setSearch(e.target.value); setPage(1); }}
+              className="pl-9"
+            />
+          </div>
 
-        <Select
-          value={status || 'all'}
-          onValueChange={(v) => { setStatus(v === 'all' ? '' : (v as ApplicationStatus)); setPage(1); }}
-        >
-          <SelectTrigger className="w-40">
-            <SelectValue placeholder="All statuses" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All statuses</SelectItem>
-            {ALL_STATUSES.map((s) => (
-              <SelectItem key={s} value={s}>{STATUS_LABELS[s]}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-
-        <Select value={sort} onValueChange={(v) => setSort(v as SortOption)}>
-          <SelectTrigger className="w-48">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="appliedAt_desc">Newest first</SelectItem>
-            <SelectItem value="appliedAt_asc">Oldest first</SelectItem>
-            <SelectItem value="company_asc">Company A–Z</SelectItem>
-            <SelectItem value="updatedAt_desc">Recently updated</SelectItem>
-          </SelectContent>
-        </Select>
-
-        <div className="flex gap-1 rounded-md border p-1">
-          <Button
-            variant={view === 'table' ? 'secondary' : 'ghost'}
-            size="sm"
-            onClick={() => { setView('table'); localStorage.setItem('applications-view', 'table'); }}
+          <Select
+            value={status || 'all'}
+            onValueChange={(v) => { setStatus(v === 'all' ? '' : (v as ApplicationStatus)); setPage(1); }}
           >
-            <LayoutList className="h-4 w-4" />
-          </Button>
-          <Button
-            variant={view === 'kanban' ? 'secondary' : 'ghost'}
-            size="sm"
-            onClick={() => { setView('kanban'); localStorage.setItem('applications-view', 'kanban'); }}
-          >
-            <LayoutGrid className="h-4 w-4" />
-          </Button>
+            <SelectTrigger className="w-40">
+              <SelectValue placeholder="All statuses" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All statuses</SelectItem>
+              {ALL_STATUSES.map((s) => (
+                <SelectItem key={s} value={s}>{STATUS_LABELS[s]}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
+          <Select value={sort} onValueChange={(v) => setSort(v as SortOption)}>
+            <SelectTrigger className="w-48">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="appliedAt_desc">Newest first</SelectItem>
+              <SelectItem value="appliedAt_asc">Oldest first</SelectItem>
+              <SelectItem value="company_asc">Company A–Z</SelectItem>
+              <SelectItem value="updatedAt_desc">Recently updated</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
-      </div>
+      )}
 
       {view === 'table' ? (
         <ApplicationTable
@@ -138,7 +141,9 @@ export function ApplicationsPage() {
           onPageChange={setPage}
         />
       ) : (
-        <KanbanBoard applications={applications} isLoading={isLoading} />
+        <div className="flex-1 min-h-0">
+          <KanbanBoard applications={applications} isLoading={isLoading} />
+        </div>
       )}
     </div>
   );
