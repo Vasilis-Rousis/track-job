@@ -72,6 +72,7 @@ export function ApplicationForm({ application, onSuccess }: ApplicationFormProps
     control,
     reset,
     watch,
+    setValue,
     formState: { errors, isSubmitting },
   } = useForm<FormData>({
     resolver: zodResolver(schema),
@@ -84,6 +85,22 @@ export function ApplicationForm({ application, onSuccess }: ApplicationFormProps
   });
 
   const appliedAt = watch('appliedAt');
+
+  // Auto-fill follow-up to appliedAt + 7 days in create mode (if it meets the minimum rules)
+  useEffect(() => {
+    if (isEdit || !appliedAt) return;
+    const toLocalDateStr = (d: Date) =>
+      `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    tomorrow.setHours(0, 0, 0, 0);
+    const candidate = new Date(`${appliedAt}T00:00:00`);
+    candidate.setDate(candidate.getDate() + 7);
+    candidate.setHours(0, 0, 0, 0);
+    if (candidate >= tomorrow) {
+      setValue('followUpAt', toLocalDateStr(candidate), { shouldValidate: false });
+    }
+  }, [appliedAt, isEdit, setValue]);
   const followUpMin = (() => {
     const toLocalDateStr = (d: Date) =>
       `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;

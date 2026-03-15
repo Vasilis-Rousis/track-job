@@ -1,9 +1,16 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { format, parseISO } from 'date-fns';
-import { Loader2, Link as LinkIcon, Trash2 } from 'lucide-react';
+import { Loader2, Link as LinkIcon, Trash2, ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -28,6 +35,16 @@ const statusConfig: Record<EmailStatus, { label: string; variant: 'default' | 's
   CANCELLED: { label: 'Cancelled', variant: 'outline' },
 };
 
+type SortField = 'scheduledFor' | 'company';
+type SortDir = 'asc' | 'desc';
+
+function SortIcon({ field, current, dir }: { field: SortField; current: SortField; dir: SortDir }) {
+  if (field !== current) return <ArrowUpDown className="ml-1 h-3.5 w-3.5 text-muted-foreground/50" />;
+  return dir === 'asc'
+    ? <ArrowUp className="ml-1 h-3.5 w-3.5" />
+    : <ArrowDown className="ml-1 h-3.5 w-3.5" />;
+}
+
 export default function ScheduledEmailsPage() {
   const navigate = useNavigate();
   const { data: gmailStatus, isLoading: gmailLoading } = useGmailStatus();
@@ -38,6 +55,33 @@ export default function ScheduledEmailsPage() {
   const [selectedEmail, setSelectedEmail] = useState<ScheduledEmail | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<ScheduledEmail | null>(null);
+
+  const [statusFilter, setStatusFilter] = useState<EmailStatus | 'ALL'>('ALL');
+  const [sortField, setSortField] = useState<SortField>('scheduledFor');
+  const [sortDir, setSortDir] = useState<SortDir>('desc');
+
+  const handleSort = (field: SortField) => {
+    if (field === sortField) {
+      setSortDir((d) => (d === 'asc' ? 'desc' : 'asc'));
+    } else {
+      setSortField(field);
+      setSortDir('asc');
+    }
+  };
+
+  const displayed = useMemo(() => {
+    let list = statusFilter === 'ALL' ? emails : emails.filter((e) => e.status === statusFilter);
+    list = [...list].sort((a, b) => {
+      let cmp = 0;
+      if (sortField === 'scheduledFor') {
+        cmp = new Date(a.scheduledFor).getTime() - new Date(b.scheduledFor).getTime();
+      } else {
+        cmp = (a.application?.company ?? '').localeCompare(b.application?.company ?? '');
+      }
+      return sortDir === 'asc' ? cmp : -cmp;
+    });
+    return list;
+  }, [emails, statusFilter, sortField, sortDir]);
 
   const handleRowClick = (email: ScheduledEmail) => {
     setSelectedEmail(email);
@@ -89,15 +133,42 @@ export default function ScheduledEmailsPage() {
         </p>
       </div>
 
+      {/* Filters */}
+      <div className="flex items-center gap-3">
+        <Select value={statusFilter} onValueChange={(v) => setStatusFilter(v as EmailStatus | 'ALL')}>
+          <SelectTrigger className="w-40">
+            <SelectValue placeholder="Status" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="ALL">All statuses</SelectItem>
+            <SelectItem value="PENDING">Scheduled</SelectItem>
+            <SelectItem value="SENT">Sent</SelectItem>
+            <SelectItem value="FAILED">Failed</SelectItem>
+            <SelectItem value="CANCELLED">Cancelled</SelectItem>
+          </SelectContent>
+        </Select>
+
+        {statusFilter !== 'ALL' && (
+          <Button variant="ghost" size="sm" onClick={() => setStatusFilter('ALL')} className="text-muted-foreground">
+            Clear filter
+          </Button>
+        )}
+
+        <span className="ml-auto text-sm text-muted-foreground">
+          {displayed.length} {displayed.length === 1 ? 'email' : 'emails'}
+        </span>
+      </div>
+
       {isLoading ? (
         <div className="flex items-center justify-center py-16">
           <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
         </div>
-      ) : emails.length === 0 ? (
+      ) : displayed.length === 0 ? (
         <div className="rounded-md border border-dashed p-10 text-center">
           <p className="text-sm text-muted-foreground">
-            No scheduled emails yet. Schedule one from any application with status{' '}
-            <span className="font-medium">Applied</span>.
+            {statusFilter === 'ALL'
+              ? <>No scheduled emails yet. Schedule one from any application with status <span className="font-medium">Applied</span>.</>
+              : 'No emails match this filter.'}
           </p>
         </div>
       ) : (
@@ -105,15 +176,33 @@ export default function ScheduledEmailsPage() {
           <table className="w-full text-sm">
             <thead className="bg-muted/50 border-b">
               <tr>
-                <th className="text-left px-4 py-3 font-medium text-muted-foreground">Application</th>
+                <th className="text-left px-4 py-3 font-medium text-muted-foreground">
+                  <button
+                    type="button"
+                    className="inline-flex items-center hover:text-foreground transition-colors"
+                    onClick={() => handleSort('company')}
+                  >
+                    Application
+                    <SortIcon field="company" current={sortField} dir={sortDir} />
+                  </button>
+                </th>
                 <th className="text-left px-4 py-3 font-medium text-muted-foreground">Sending to</th>
-                <th className="text-left px-4 py-3 font-medium text-muted-foreground">Scheduled for</th>
+                <th className="text-left px-4 py-3 font-medium text-muted-foreground">
+                  <button
+                    type="button"
+                    className="inline-flex items-center hover:text-foreground transition-colors"
+                    onClick={() => handleSort('scheduledFor')}
+                  >
+                    Scheduled for
+                    <SortIcon field="scheduledFor" current={sortField} dir={sortDir} />
+                  </button>
+                </th>
                 <th className="text-left px-4 py-3 font-medium text-muted-foreground">Status</th>
                 <th className="px-4 py-3" />
               </tr>
             </thead>
             <tbody className="divide-y">
-              {emails.map((email) => {
+              {displayed.map((email) => {
                 const cfg = statusConfig[email.status];
                 return (
                   <tr

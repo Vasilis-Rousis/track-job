@@ -4,6 +4,7 @@ import {
   type ApplicationsListParams,
   type CreateApplicationData,
 } from '@/api/applications.api';
+import { EMAILS_KEY } from '@/hooks/useEmails';
 
 export const APPLICATIONS_KEY = ['applications'] as const;
 export const STATS_KEY = ['stats'] as const;
@@ -49,6 +50,7 @@ export function useUpdateApplication() {
       qc.invalidateQueries({ queryKey: APPLICATIONS_KEY });
       qc.invalidateQueries({ queryKey: [...APPLICATIONS_KEY, id] });
       qc.invalidateQueries({ queryKey: STATS_KEY });
+      qc.invalidateQueries({ queryKey: EMAILS_KEY });
     },
   });
 }

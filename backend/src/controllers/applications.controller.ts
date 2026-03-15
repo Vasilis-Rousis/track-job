@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import { Prisma, Status } from '@prisma/client';
 import { prisma } from '../config/db';
+import { emailQueue } from '../config/emailQueue';
 import { AppError } from '../middleware/errorHandler';
 import { asyncHandler } from '../middleware/asyncHandler';
 import {
@@ -209,6 +210,29 @@ export const updateApplication = asyncHandler(async (req: Request, res: Response
 
     return app;
   });
+
+  // If status changed away from APPLIED, cancel any pending scheduled emails
+  if (status && status !== existing.status && status !== 'APPLIED') {
+    const pendingEmails = await prisma.scheduledEmail.findMany({
+      where: { applicationId: id, status: 'PENDING' },
+    });
+
+    if (pendingEmails.length > 0) {
+      await Promise.all(
+        pendingEmails.map(async (email) => {
+          if (email.bullJobId) {
+            const job = await emailQueue.getJob(email.bullJobId);
+            await job?.remove();
+          }
+        })
+      );
+
+      await prisma.scheduledEmail.updateMany({
+        where: { id: { in: pendingEmails.map((e) => e.id) } },
+        data: { status: 'CANCELLED' },
+      });
+    }
+  }
 
   res.json(updated);
 });

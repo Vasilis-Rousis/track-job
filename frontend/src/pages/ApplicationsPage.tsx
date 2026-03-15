@@ -41,11 +41,11 @@ export function ApplicationsPage() {
     status: status || undefined,
     sort,
     page,
-    limit: view === 'kanban' ? 100 : 20,
+    limit: view === 'kanban' ? 100 : 10,
   });
 
   const applications = data?.data ?? [];
-  const pagination = data?.pagination ?? { total: 0, page: 1, limit: 20, totalPages: 0 };
+  const pagination = data?.pagination ?? { total: 0, page: 1, limit: 10, totalPages: 0 };
 
   return (
     <div className="space-y-6">

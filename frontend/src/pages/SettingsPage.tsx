@@ -7,6 +7,7 @@ import { useSearchParams } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { PasswordInput } from '@/components/ui/password-input';
 import { Label } from '@/components/ui/label';
 import {
   Card,
@@ -259,9 +260,8 @@ export function SettingsPage() {
           <CardContent className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="currentPassword">Current Password</Label>
-              <Input
+              <PasswordInput
                 id="currentPassword"
-                type="password"
                 {...passwordForm.register('currentPassword')}
               />
               {passwordForm.formState.errors.currentPassword && (
@@ -272,9 +272,8 @@ export function SettingsPage() {
             </div>
             <div className="space-y-2">
               <Label htmlFor="newPassword">New Password</Label>
-              <Input
+              <PasswordInput
                 id="newPassword"
-                type="password"
                 {...passwordForm.register('newPassword')}
               />
               {passwordForm.formState.errors.newPassword && (
@@ -285,9 +284,8 @@ export function SettingsPage() {
             </div>
             <div className="space-y-2">
               <Label htmlFor="confirmPassword">Confirm New Password</Label>
-              <Input
+              <PasswordInput
                 id="confirmPassword"
-                type="password"
                 {...passwordForm.register('confirmPassword')}
               />
               {passwordForm.formState.errors.confirmPassword && (
