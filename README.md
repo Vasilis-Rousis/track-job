@@ -1,56 +1,54 @@
 # JobTracker
 
-A full-stack job application tracking app built with React, Node.js, and PostgreSQL.
+A full-stack job application tracking app built with React, Node.js, and PostgreSQL. Dockerized with automated CI/CD deployment.
 
 ## Features
 
-- Track job applications with statuses: Wishlist, Applied, Phone Screen, Interview, Offer, Rejected, Withdrawn
-- Full status history with timestamps for every application
-- Kanban board and table views for your applications
-- Contact management — create contacts and link them to applications
-- Dashboard with stats (response rate, offer rate, recent activity)
-- Dark / Light / System theme
-- JWT authentication with secure password hashing
+- **Application tracking** — Kanban board and table views with statuses: Wishlist, Applied, Phone Screen, Interview, Offer, Rejected, Withdrawn
+- **Status history** — Full audit trail with timestamps for every status change
+- **Contact management** — Link contacts to applications, store email/phone/LinkedIn
+- **Gmail integration** — Connect your Gmail account to send scheduled follow-up emails via OAuth2
+- **Scheduled emails** — Queue follow-up emails with BullMQ + Redis, sent automatically at the scheduled time
+- **Dashboard** — Stats overview with response rate, offer rate, and recent activity
+- **Admin panel** — User registration approval workflow (pending/approved/rejected)
+- **Dark / Light / System theme**
+
+## Security
+
+- httpOnly cookie authentication (no tokens in localStorage)
+- Token revocation via Redis blacklist on logout and password change
+- Rate limiting on all API routes (stricter on login/register)
+- Gmail OAuth tokens encrypted at rest (AES-256-GCM)
+- Password complexity requirements
+- Helmet security headers, CORS, Zod validation on all inputs
+- Prisma ORM (parameterized queries, no SQL injection)
 
 ## Tech Stack
 
-**Frontend**
-- React 18 + TypeScript
-- Vite 5
-- Tailwind CSS 3 + shadcn/ui components
-- React Query v5 (server state)
-- Zustand (client state + persistence)
-- React Router v6
-- Zod + React Hook Form
-
-**Backend**
-- Node.js 20 + Express 4 + TypeScript
-- Prisma 5 (ORM)
-- PostgreSQL 15
-- JWT authentication
-- Zod validation
-
-**Infrastructure**
-- Docker Compose (db, pgAdmin, backend, frontend)
+| Layer | Stack |
+|-------|-------|
+| Frontend | React 18, TypeScript, Vite, Tailwind CSS, shadcn/ui, React Query, Zustand, React Router, Zod |
+| Backend | Node.js 20, Express, TypeScript, Prisma, Zod, BullMQ, googleapis |
+| Database | PostgreSQL 15, Redis 7 |
+| Infrastructure | Docker Compose, Caddy (auto HTTPS), GitHub Actions CI/CD |
 
 ## Getting Started
 
 ### Prerequisites
 
-- [Docker Desktop](https://www.docker.com/products/docker-desktop/) with virtualization enabled
+- [Docker Desktop](https://www.docker.com/products/docker-desktop/)
 
 ### Run locally
 
 ```bash
-# Clone the repo
 git clone https://github.com/Vasilis-Rousis/track-job.git
 cd track-job
-
-# Start all services
+cp .env.example .env   # Edit .env with your values
 docker compose up --build
 
-# In a second terminal, run the database migration (first time only)
-docker compose exec backend npx prisma migrate dev --name init
+# First time only — run migrations and seed
+docker compose exec backend npx prisma migrate dev
+docker compose exec backend npx prisma db seed
 ```
 
 | Service  | URL                   |
@@ -59,40 +57,25 @@ docker compose exec backend npx prisma migrate dev --name init
 | Backend  | http://localhost:3000 |
 | pgAdmin  | http://localhost:5050 |
 
-**pgAdmin credentials:** `admin@admin.com` / `admin`
-**pgAdmin DB connection:** host `db`, port `5432`, user `postgres`, password `postgres`
-
 ### Environment variables
 
-The `.env` file at the project root is used by Docker Compose. Key variables:
+See `.env.example` for all variables. Key ones:
 
-| Variable         | Description                        |
-|------------------|------------------------------------|
-| `DATABASE_URL`   | PostgreSQL connection string       |
-| `JWT_SECRET`     | Secret for signing JWT tokens      |
-| `JWT_EXPIRES_IN` | Token expiry (e.g. `7d`)           |
-| `PORT`           | Backend port (default `3000`)      |
-| `FRONTEND_URL`   | Allowed CORS origin                |
+| Variable | Description |
+|----------|-------------|
+| `DATABASE_URL` | PostgreSQL connection string |
+| `JWT_SECRET` | Secret for signing JWTs (min 32 chars) |
+| `ENCRYPTION_KEY` | 64-char hex key for encrypting Gmail tokens |
+| `REDIS_URL` | Redis connection string |
+| `GOOGLE_CLIENT_ID` | Google OAuth2 client ID |
+| `GOOGLE_CLIENT_SECRET` | Google OAuth2 client secret |
 
-## Project Structure
+### Production deployment
 
-```
-track-job/
-├── backend/
-│   ├── prisma/          # Schema and migrations
-│   └── src/
-│       ├── config/      # Env and DB config
-│       ├── controllers/ # Route handlers
-│       ├── middleware/  # Auth, error handler, asyncHandler
-│       ├── routes/      # Express routers
-│       └── schemas/     # Zod validation schemas
-├── frontend/
-│   └── src/
-│       ├── api/         # Axios API calls
-│       ├── components/  # UI and feature components
-│       ├── hooks/       # React Query hooks
-│       ├── pages/       # Route-level page components
-│       ├── store/       # Zustand stores (auth, theme)
-│       └── types/       # TypeScript interfaces
-└── docker-compose.yml
+See `.env.production.example` for production config. The app deploys automatically on push to `master` via GitHub Actions — a build check runs first, then deploys via SSH.
+
+```bash
+cp .env.production.example .env  # On your server, fill in real values
+docker compose -f docker-compose.prod.yml up -d --build
+docker compose -f docker-compose.prod.yml exec -T backend npx prisma migrate deploy
 ```
