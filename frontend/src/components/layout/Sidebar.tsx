@@ -10,6 +10,7 @@ import {
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { useAuthStore } from '@/store/authStore';
+import { authApi } from '@/api/auth.api';
 import { getInitials } from '@/utils/helpers';
 import { cn } from '@/lib/utils';
 
@@ -23,11 +24,12 @@ const navItems = [
 const adminNavItem = { to: '/admin', label: 'Admin', icon: Shield, end: false };
 
 export function Sidebar() {
-  const { user, logout } = useAuthStore();
+  const { user, clearUser } = useAuthStore();
   const navigate = useNavigate();
 
-  const handleLogout = () => {
-    logout();
+  const handleLogout = async () => {
+    try { await authApi.logout(); } catch { /* ignore */ }
+    clearUser();
     navigate('/login');
   };
 

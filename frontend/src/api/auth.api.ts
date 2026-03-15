@@ -8,6 +8,8 @@ export const authApi = {
   login: (data: { email: string; password: string }) =>
     api.post<AuthResponse>('/auth/login', data).then((r) => r.data),
 
+  logout: () => api.post<{ message: string }>('/auth/logout').then((r) => r.data),
+
   me: () => api.get<User>('/auth/me').then((r) => r.data),
 
   updateProfile: (data: { name: string }) =>

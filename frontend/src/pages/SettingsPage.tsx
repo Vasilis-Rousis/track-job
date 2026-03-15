@@ -51,7 +51,7 @@ const THEME_OPTIONS: { value: Theme; label: string; description: string }[] = [
 ];
 
 export function SettingsPage() {
-  const { user, setAuth, token } = useAuthStore();
+  const { user, setUser } = useAuthStore();
   const { theme, setTheme } = useThemeStore();
   const [searchParams, setSearchParams] = useSearchParams();
   const qc = useQueryClient();
@@ -103,7 +103,7 @@ export function SettingsPage() {
   const onProfileSubmit = async (data: ProfileFormData) => {
     try {
       const updated = await authApi.updateProfile(data);
-      if (token) setAuth(updated, token);
+      setUser(updated);
       toast({ title: 'Profile updated' });
     } catch (err) {
       toast({

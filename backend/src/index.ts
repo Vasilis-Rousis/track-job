@@ -1,12 +1,14 @@
 import 'dotenv/config';
 import './types/index'; // Load Express type augmentations
 import express from 'express';
+import cookieParser from 'cookie-parser';
 import cors from 'cors';
 import helmet from 'helmet';
 import morgan from 'morgan';
 
 import { env } from './config/env';
 import { errorHandler } from './middleware/errorHandler';
+import { globalLimiter } from './middleware/rateLimiter';
 import authRoutes from './routes/auth.routes';
 import applicationRoutes from './routes/applications.routes';
 import contactRoutes from './routes/contacts.routes';
@@ -27,9 +29,13 @@ app.use(
     credentials: true,
   })
 );
+app.use(cookieParser());
 app.use(morgan(env.NODE_ENV === 'production' ? 'combined' : 'dev'));
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+app.use(express.json({ limit: '1mb' }));
+app.use(express.urlencoded({ extended: true, limit: '1mb' }));
+
+// Rate limiting
+app.use('/api', globalLimiter);
 
 // Health check
 app.get('/health', (_req, res) => {

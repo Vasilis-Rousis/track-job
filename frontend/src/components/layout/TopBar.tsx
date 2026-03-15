@@ -4,6 +4,7 @@ import { Menu, X, Briefcase, LayoutDashboard, Users, Mail, LogOut } from 'lucide
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { useAuthStore } from '@/store/authStore';
+import { authApi } from '@/api/auth.api';
 import { getInitials } from '@/utils/helpers';
 import { cn } from '@/lib/utils';
 
@@ -25,15 +26,16 @@ const navItems = [
 export function TopBar() {
   const [open, setOpen] = useState(false);
   const location = useLocation();
-  const { user, logout } = useAuthStore();
+  const { user, clearUser } = useAuthStore();
   const navigate = useNavigate();
 
   const pageTitle =
     PAGE_TITLES[location.pathname] ??
     (location.pathname.startsWith('/applications/') ? 'Application Detail' : 'JobTracker');
 
-  const handleLogout = () => {
-    logout();
+  const handleLogout = async () => {
+    try { await authApi.logout(); } catch { /* ignore */ }
+    clearUser();
     navigate('/login');
   };
 

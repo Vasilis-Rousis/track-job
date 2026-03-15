@@ -4,6 +4,7 @@ import { oauth2Client, GMAIL_SCOPES } from '../config/gmail';
 import { prisma } from '../config/db';
 import { env } from '../config/env';
 import { AppError } from '../middleware/errorHandler';
+import { encrypt } from '../utils/crypto';
 
 interface StatePayload {
   userId: string;
@@ -56,18 +57,21 @@ export const handleCallback = async (req: Request, res: Response): Promise<void>
       gmailAddress = decoded?.email ?? '';
     }
 
+    const encryptedAccess = encrypt(tokens.access_token ?? '');
+    const encryptedRefresh = tokens.refresh_token ? encrypt(tokens.refresh_token) : undefined;
+
     await prisma.userGmailCredential.upsert({
       where: { userId },
       create: {
         userId,
-        accessToken: tokens.access_token ?? '',
-        refreshToken: tokens.refresh_token ?? '',
+        accessToken: encryptedAccess,
+        refreshToken: encryptedRefresh ?? encrypt(''),
         expiresAt: new Date(tokens.expiry_date ?? Date.now() + 3600 * 1000),
         gmailAddress,
       },
       update: {
-        accessToken: tokens.access_token ?? '',
-        ...(tokens.refresh_token ? { refreshToken: tokens.refresh_token } : {}),
+        accessToken: encryptedAccess,
+        ...(encryptedRefresh ? { refreshToken: encryptedRefresh } : {}),
         expiresAt: new Date(tokens.expiry_date ?? Date.now() + 3600 * 1000),
         gmailAddress,
       },

@@ -21,7 +21,7 @@ const schema = z.object({
 type FormData = z.infer<typeof schema>;
 
 export function LoginPage() {
-  const { setAuth } = useAuthStore();
+  const { setUser } = useAuthStore();
   const navigate = useNavigate();
 
   const {
@@ -33,7 +33,7 @@ export function LoginPage() {
   const onSubmit = async (data: FormData) => {
     try {
       const result = await authApi.login(data);
-      setAuth(result.user, result.token);
+      setUser(result.user);
       navigate('/');
     } catch (err) {
       toast({

@@ -2,6 +2,7 @@ import { Worker } from 'bullmq';
 import { prisma } from '../config/db';
 import { oauth2Client, sendViaGmailApi } from '../config/gmail';
 import { getRedisConnection } from '../config/redis';
+import { decrypt } from '../utils/crypto';
 
 export function startEmailWorker() {
   const worker = new Worker(
@@ -20,10 +21,10 @@ export function startEmailWorker() {
       });
       if (!cred) throw new Error('Gmail not connected');
 
-      // Set credentials — googleapis handles token refresh internally
+      // Decrypt and set credentials — googleapis handles token refresh internally
       oauth2Client.setCredentials({
-        access_token: cred.accessToken,
-        refresh_token: cred.refreshToken,
+        access_token: decrypt(cred.accessToken),
+        refresh_token: decrypt(cred.refreshToken),
         expiry_date: cred.expiresAt.getTime(),
       });
 

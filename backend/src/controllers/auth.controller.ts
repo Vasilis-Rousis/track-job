@@ -4,9 +4,13 @@ import jwt from 'jsonwebtoken';
 import { prisma } from '../config/db';
 import { env } from '../config/env';
 import { AppError } from '../middleware/errorHandler';
+import { TOKEN_COOKIE, type JwtPayload } from '../middleware/auth';
 import { asyncHandler } from '../middleware/asyncHandler';
+import { blacklistToken } from '../utils/tokenBlacklist';
+import { randomUUID } from 'crypto';
 import { oauth2Client, buildRawMessage } from '../config/gmail';
 import { google } from 'googleapis';
+import { decrypt } from '../utils/crypto';
 
 const USER_SELECT = {
   id: true,
@@ -33,8 +37,8 @@ async function notifyAdminOfRegistration(userName: string, userEmail: string) {
 
     const { accessToken, refreshToken, expiresAt } = adminUser.gmailCredential;
     oauth2Client.setCredentials({
-      access_token: accessToken,
-      refresh_token: refreshToken,
+      access_token: decrypt(accessToken),
+      refresh_token: decrypt(refreshToken),
       expiry_date: expiresAt.getTime(),
     });
 
@@ -100,13 +104,20 @@ export const login = asyncHandler(async (req: Request, res: Response) => {
   }
 
   const token = jwt.sign(
-    { userId: user.id, email: user.email, name: user.name, role: user.role },
+    { userId: user.id, email: user.email, name: user.name, role: user.role, jti: randomUUID() },
     env.JWT_SECRET,
     { expiresIn: env.JWT_EXPIRES_IN as jwt.SignOptions['expiresIn'] }
   );
 
+  res.cookie(TOKEN_COOKIE, token, {
+    httpOnly: true,
+    secure: env.NODE_ENV === 'production',
+    sameSite: env.NODE_ENV === 'production' ? 'strict' : 'lax',
+    maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+    path: '/',
+  });
+
   res.json({
-    token,
     user: {
       id: user.id,
       email: user.email,
@@ -116,6 +127,23 @@ export const login = asyncHandler(async (req: Request, res: Response) => {
       createdAt: user.createdAt,
     },
   });
+});
+
+export const logout = asyncHandler(async (req: Request, res: Response) => {
+  // Blacklist the current token so it can't be reused
+  const payload = (req as any).tokenPayload as JwtPayload | undefined;
+  if (payload?.jti) {
+    await blacklistToken(payload.jti, payload.exp);
+  }
+
+  res.cookie(TOKEN_COOKIE, '', {
+    httpOnly: true,
+    secure: env.NODE_ENV === 'production',
+    sameSite: env.NODE_ENV === 'production' ? 'strict' : 'lax',
+    maxAge: 0,
+    path: '/',
+  });
+  res.json({ message: 'Logged out' });
 });
 
 export const me = asyncHandler(async (req: Request, res: Response) => {
@@ -160,6 +188,20 @@ export const changePassword = asyncHandler(async (req: Request, res: Response) =
   await prisma.user.update({
     where: { id: req.user.id },
     data: { passwordHash },
+  });
+
+  // Blacklist the current token so the user must re-login
+  const payload = (req as any).tokenPayload as JwtPayload | undefined;
+  if (payload?.jti) {
+    await blacklistToken(payload.jti, payload.exp);
+  }
+
+  res.cookie(TOKEN_COOKIE, '', {
+    httpOnly: true,
+    secure: env.NODE_ENV === 'production',
+    sameSite: env.NODE_ENV === 'production' ? 'strict' : 'lax',
+    maxAge: 0,
+    path: '/',
   });
 
   res.json({ message: 'Password updated successfully' });

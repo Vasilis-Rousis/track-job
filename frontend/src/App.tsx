@@ -18,6 +18,11 @@ function PublicRoute({ children }: { children: React.ReactNode }) {
   return isAuthenticated ? <Navigate to="/" replace /> : <>{children}</>;
 }
 
+function AdminRoute({ children }: { children: React.ReactNode }) {
+  const user = useAuthStore((s) => s.user);
+  return user?.role === 'ADMIN' ? <>{children}</> : <Navigate to="/" replace />;
+}
+
 export default function App() {
   return (
     <>
@@ -49,7 +54,7 @@ export default function App() {
             <Route path="/contacts" element={<ContactsPage />} />
             <Route path="/emails" element={<ScheduledEmailsPage />} />
             <Route path="/settings" element={<SettingsPage />} />
-            <Route path="/admin" element={<AdminPage />} />
+            <Route path="/admin" element={<AdminRoute><AdminPage /></AdminRoute>} />
           </Route>
         </Route>
 
