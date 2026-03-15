@@ -103,6 +103,17 @@ export const updateEmail = async (req: Request, res: Response): Promise<void> =>
   if (!email) throw new AppError(404, 'Scheduled email not found');
   if (email.status !== 'PENDING') throw new AppError(400, 'Only pending emails can be edited');
 
+  // Validate contacts belong to user and have emails
+  const contacts = await prisma.contact.findMany({
+    where: { id: { in: data.contactIds }, userId },
+  });
+  if (contacts.length !== data.contactIds.length) {
+    throw new AppError(400, 'One or more contacts not found');
+  }
+  if (contacts.filter((c) => c.email).length === 0) {
+    throw new AppError(400, 'Selected contacts have no email addresses');
+  }
+
   // Remove old BullMQ job
   if (email.bullJobId) {
     const job = await emailQueue.getJob(email.bullJobId);

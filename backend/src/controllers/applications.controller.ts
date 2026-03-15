@@ -248,6 +248,21 @@ export const deleteApplication = asyncHandler(async (req: Request, res: Response
 
   if (!existing) throw new AppError(404, 'Application not found');
 
+  // Cancel any pending BullMQ jobs before cascade-deleting scheduled emails
+  const pendingEmails = await prisma.scheduledEmail.findMany({
+    where: { applicationId: id, status: 'PENDING' },
+  });
+  if (pendingEmails.length > 0) {
+    await Promise.all(
+      pendingEmails.map(async (email) => {
+        if (email.bullJobId) {
+          const job = await emailQueue.getJob(email.bullJobId);
+          await job?.remove();
+        }
+      })
+    );
+  }
+
   await prisma.application.delete({ where: { id } });
 
   res.json({ message: 'Application deleted' });
