@@ -3,6 +3,7 @@ import {
   LayoutDashboard,
   Briefcase,
   Users,
+  Mail,
   LogOut,
 } from 'lucide-react';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
@@ -15,6 +16,7 @@ const navItems = [
   { to: '/', label: 'Dashboard', icon: LayoutDashboard, end: true },
   { to: '/applications', label: 'Applications', icon: Briefcase, end: false },
   { to: '/contacts', label: 'Contacts', icon: Users, end: false },
+  { to: '/emails', label: 'Emails', icon: Mail, end: false },
 ];
 
 export function Sidebar() {

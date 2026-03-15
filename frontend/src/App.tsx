@@ -9,6 +9,7 @@ import { ApplicationsPage } from '@/pages/ApplicationsPage';
 import { ApplicationDetailPage } from '@/pages/ApplicationDetailPage';
 import { ContactsPage } from '@/pages/ContactsPage';
 import { SettingsPage } from '@/pages/SettingsPage';
+import ScheduledEmailsPage from '@/pages/ScheduledEmailsPage';
 import { useAuthStore } from '@/store/authStore';
 
 function PublicRoute({ children }: { children: React.ReactNode }) {
@@ -45,6 +46,7 @@ export default function App() {
             <Route path="/applications" element={<ApplicationsPage />} />
             <Route path="/applications/:id" element={<ApplicationDetailPage />} />
             <Route path="/contacts" element={<ContactsPage />} />
+            <Route path="/emails" element={<ScheduledEmailsPage />} />
             <Route path="/settings" element={<SettingsPage />} />
           </Route>
         </Route>

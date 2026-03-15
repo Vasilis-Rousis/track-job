@@ -16,7 +16,8 @@ import { getAxiosErrorMessage } from '@/utils/helpers';
 const schema = z.object({
   name: z.string().min(1, 'Name is required'),
   title: z.string().optional(),
-  email: z.string().email('Invalid email').optional().or(z.literal('')),
+  email: z.string().min(1, 'Email is required').email('Invalid email'),
+  phone: z.string().optional(),
   linkedin: z.string().url('Invalid URL').optional().or(z.literal('')),
   notes: z.string().optional(),
 });
@@ -41,7 +42,7 @@ export function ContactForm({ contact, applicationId, onSuccess }: ContactFormPr
     formState: { errors, isSubmitting },
   } = useForm<FormData>({
     resolver: zodResolver(schema),
-    defaultValues: { name: '', title: '', email: '', linkedin: '', notes: '' },
+    defaultValues: { name: '', title: '', email: '', phone: '', linkedin: '', notes: '' },
   });
 
   useEffect(() => {
@@ -50,6 +51,7 @@ export function ContactForm({ contact, applicationId, onSuccess }: ContactFormPr
         name: contact.name,
         title: contact.title ?? '',
         email: contact.email ?? '',
+        phone: contact.phone ?? '',
         linkedin: contact.linkedin ?? '',
         notes: contact.notes ?? '',
       });
@@ -60,7 +62,8 @@ export function ContactForm({ contact, applicationId, onSuccess }: ContactFormPr
     const payload = {
       name: data.name,
       title: data.title || undefined,
-      email: data.email || undefined,
+      email: data.email,
+      phone: data.phone || undefined,
       linkedin: data.linkedin || undefined,
       notes: data.notes || undefined,
       applicationId,
@@ -101,24 +104,28 @@ export function ContactForm({ contact, applicationId, onSuccess }: ContactFormPr
       </div>
       <div className="grid grid-cols-2 gap-4">
         <div className="space-y-2">
-          <Label htmlFor="email">Email</Label>
+          <Label htmlFor="email">Email *</Label>
           <Input id="email" type="email" placeholder="john@acme.com" {...register('email')} />
           {errors.email && (
             <p className="text-xs text-destructive">{errors.email.message}</p>
           )}
         </div>
         <div className="space-y-2">
-          <Label htmlFor="linkedin">LinkedIn</Label>
-          <Input
-            id="linkedin"
-            type="url"
-            placeholder="https://linkedin.com/in/..."
-            {...register('linkedin')}
-          />
-          {errors.linkedin && (
-            <p className="text-xs text-destructive">{errors.linkedin.message}</p>
-          )}
+          <Label htmlFor="phone">Phone</Label>
+          <Input id="phone" type="tel" placeholder="+1 555 000 0000" {...register('phone')} />
         </div>
+      </div>
+      <div className="space-y-2">
+        <Label htmlFor="linkedin">LinkedIn</Label>
+        <Input
+          id="linkedin"
+          type="url"
+          placeholder="https://linkedin.com/in/..."
+          {...register('linkedin')}
+        />
+        {errors.linkedin && (
+          <p className="text-xs text-destructive">{errors.linkedin.message}</p>
+        )}
       </div>
       <div className="space-y-2">
         <Label htmlFor="notes">Notes</Label>

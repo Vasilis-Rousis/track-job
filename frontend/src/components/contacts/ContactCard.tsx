@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Pencil, Trash2, Mail, Linkedin } from 'lucide-react';
+import { Pencil, Trash2, Mail, Phone, Linkedin } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import {
@@ -58,6 +58,15 @@ export function ContactCard({ contact }: ContactCardProps) {
               >
                 <Mail className="h-3 w-3" />
                 {contact.email}
+              </a>
+            )}
+            {contact.phone && (
+              <a
+                href={`tel:${contact.phone}`}
+                className="flex items-center gap-1 text-xs text-primary hover:underline"
+              >
+                <Phone className="h-3 w-3" />
+                {contact.phone}
               </a>
             )}
             {contact.linkedin && (

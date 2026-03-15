@@ -40,10 +40,11 @@ export const listContacts = asyncHandler(async (req: Request, res: Response) => 
 export const createContact = asyncHandler(async (req: Request, res: Response) => {
   if (!req.user) throw new AppError(401, 'Unauthorized');
 
-  const { name, title, email, linkedin, applicationId, notes } = req.body as {
+  const { name, title, email, phone, linkedin, applicationId, notes } = req.body as {
     name: string;
     title?: string;
     email?: string;
+    phone?: string;
     linkedin?: string;
     applicationId?: string;
     notes?: string;
@@ -63,6 +64,7 @@ export const createContact = asyncHandler(async (req: Request, res: Response) =>
       name,
       title,
       email,
+      phone,
       linkedin,
       applicationId,
       notes,
@@ -88,10 +90,11 @@ export const updateContact = asyncHandler(async (req: Request, res: Response) =>
 
   if (!existing) throw new AppError(404, 'Contact not found');
 
-  const { name, title, email, linkedin, applicationId, notes } = req.body as {
+  const { name, title, email, phone, linkedin, applicationId, notes } = req.body as {
     name?: string;
     title?: string;
     email?: string;
+    phone?: string;
     linkedin?: string;
     applicationId?: string;
     notes?: string;
@@ -110,6 +113,7 @@ export const updateContact = asyncHandler(async (req: Request, res: Response) =>
       ...(name !== undefined && { name }),
       ...(title !== undefined && { title }),
       ...(email !== undefined && { email }),
+      ...(phone !== undefined && { phone }),
       ...(linkedin !== undefined && { linkedin }),
       ...(applicationId !== undefined && { applicationId }),
       ...(notes !== undefined && { notes }),

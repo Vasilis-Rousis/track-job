@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { emailsApi, gmailApi, type ScheduleEmailData } from '@/api/emails.api';
+import { emailsApi, gmailApi, type ScheduleEmailData, type UpdateEmailData } from '@/api/emails.api';
 
 export const EMAILS_KEY = ['emails'] as const;
 export const GMAIL_STATUS_KEY = ['gmail-status'] as const;
@@ -22,10 +22,20 @@ export function useScheduleEmail() {
   });
 }
 
-export function useCancelEmail() {
+export function useUpdateEmail() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (id: string) => emailsApi.cancel(id),
+    mutationFn: ({ id, data }: { id: string; data: UpdateEmailData }) => emailsApi.update(id, data),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: EMAILS_KEY });
+    },
+  });
+}
+
+export function useDeleteEmail() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => emailsApi.delete(id),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: EMAILS_KEY });
     },

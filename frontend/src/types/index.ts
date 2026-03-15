@@ -49,6 +49,7 @@ export interface Contact {
   name: string;
   title?: string;
   email?: string;
+  phone?: string;
   linkedin?: string;
   notes?: string;
   createdAt: string;

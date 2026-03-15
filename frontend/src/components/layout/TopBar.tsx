@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useLocation, NavLink, useNavigate } from 'react-router-dom';
-import { Menu, X, Briefcase, LayoutDashboard, Users, LogOut } from 'lucide-react';
+import { Menu, X, Briefcase, LayoutDashboard, Users, Mail, LogOut } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { useAuthStore } from '@/store/authStore';
@@ -11,14 +11,15 @@ const PAGE_TITLES: Record<string, string> = {
   '/': 'Dashboard',
   '/applications': 'Applications',
   '/contacts': 'Contacts',
+  '/emails': 'Emails',
   '/settings': 'Settings',
-  // Settings is accessed via user area, not nav
 };
 
 const navItems = [
   { to: '/', label: 'Dashboard', icon: LayoutDashboard, end: true },
   { to: '/applications', label: 'Applications', icon: Briefcase, end: false },
   { to: '/contacts', label: 'Contacts', icon: Users, end: false },
+  { to: '/emails', label: 'Emails', icon: Mail, end: false },
 ];
 
 export function TopBar() {

@@ -9,6 +9,13 @@ export interface ScheduleEmailData {
   scheduledFor: string; // ISO datetime
 }
 
+export interface UpdateEmailData {
+  contactIds: string[];
+  subject: string;
+  body: string;
+  scheduledFor: string;
+}
+
 export const emailsApi = {
   schedule: (data: ScheduleEmailData) =>
     api.post<ScheduledEmail>('/emails', data).then((r) => r.data),
@@ -16,7 +23,10 @@ export const emailsApi = {
   list: (params?: { applicationId?: string }) =>
     api.get<{ data: ScheduledEmail[] }>('/emails', { params }).then((r) => r.data.data),
 
-  cancel: (id: string) =>
+  update: (id: string, data: UpdateEmailData) =>
+    api.patch<ScheduledEmail>(`/emails/${id}`, data).then((r) => r.data),
+
+  delete: (id: string) =>
     api.delete<{ message: string }>(`/emails/${id}`).then((r) => r.data),
 };
 

@@ -85,6 +85,7 @@ model Contact {
   name          String
   title         String?
   email         String?
+  phone         String?
   linkedin      String?
   notes         String?      @db.Text
   createdAt     DateTime     @default(now())

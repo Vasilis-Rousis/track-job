@@ -2,7 +2,7 @@ import { Request, Response } from 'express';
 import { prisma } from '../config/db';
 import { emailQueue } from '../config/emailQueue';
 import { AppError } from '../middleware/errorHandler';
-import type { ScheduleEmailInput } from '../schemas/email.schema';
+import type { ScheduleEmailInput, UpdateEmailInput } from '../schemas/email.schema';
 
 export const scheduleEmail = async (req: Request, res: Response): Promise<void> => {
   const data = req.body as ScheduleEmailInput;
@@ -77,23 +77,60 @@ export const listEmails = async (req: Request, res: Response): Promise<void> => 
   res.json({ data: emails });
 };
 
-export const cancelEmail = async (req: Request, res: Response): Promise<void> => {
+export const deleteEmail = async (req: Request, res: Response): Promise<void> => {
   const { id } = req.params;
   const userId = req.user!.id;
 
   const email = await prisma.scheduledEmail.findFirst({ where: { id, userId } });
   if (!email) throw new AppError(404, 'Scheduled email not found');
-  if (email.status !== 'PENDING') throw new AppError(400, 'Only pending emails can be cancelled');
 
+  if (email.status === 'PENDING' && email.bullJobId) {
+    const job = await emailQueue.getJob(email.bullJobId);
+    if (job) await job.remove();
+  }
+
+  await prisma.scheduledEmail.delete({ where: { id } });
+
+  res.json({ message: 'Email deleted' });
+};
+
+export const updateEmail = async (req: Request, res: Response): Promise<void> => {
+  const { id } = req.params;
+  const userId = req.user!.id;
+  const data = req.body as UpdateEmailInput;
+
+  const email = await prisma.scheduledEmail.findFirst({ where: { id, userId } });
+  if (!email) throw new AppError(404, 'Scheduled email not found');
+  if (email.status !== 'PENDING') throw new AppError(400, 'Only pending emails can be edited');
+
+  // Remove old BullMQ job
   if (email.bullJobId) {
     const job = await emailQueue.getJob(email.bullJobId);
     if (job) await job.remove();
   }
 
-  await prisma.scheduledEmail.update({
+  const scheduledFor = data.scheduledFor as unknown as Date;
+  const delay = Math.max(scheduledFor.getTime() - Date.now(), 0);
+
+  const updated = await prisma.scheduledEmail.update({
     where: { id },
-    data: { status: 'CANCELLED' },
+    data: {
+      contactIds: data.contactIds,
+      subject: data.subject,
+      body: data.body,
+      scheduledFor,
+      bullJobId: null,
+    },
+    include: { application: { select: { company: true, role: true } } },
   });
 
-  res.json({ message: 'Email cancelled' });
+  const newJob = await emailQueue.add(
+    'send-followup',
+    { scheduledEmailId: id },
+    { delay, jobId: `${id}-${Date.now()}`, attempts: 1 }
+  );
+
+  await prisma.scheduledEmail.update({ where: { id }, data: { bullJobId: newJob.id } });
+
+  res.json({ ...updated, bullJobId: newJob.id });
 };

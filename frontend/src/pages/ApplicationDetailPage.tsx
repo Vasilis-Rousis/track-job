@@ -4,6 +4,7 @@ import {
   ArrowLeft,
   Pencil,
   Trash2,
+  Unlink,
   ExternalLink,
   MapPin,
   Calendar,
@@ -12,6 +13,7 @@ import {
   Plus,
   Loader2,
   Mail,
+  Phone,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -38,8 +40,9 @@ import { ContactForm } from '@/components/contacts/ContactForm';
 import { LinkContactTab } from '@/components/contacts/LinkContactTab';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { FollowUpEmailModal } from '@/components/emails/FollowUpEmailModal';
+import type { Contact } from '@/types';
 import { useApplication, useDeleteApplication } from '@/hooks/useApplications';
-import { useContacts, useDeleteContact } from '@/hooks/useContacts';
+import { useContacts, useDeleteContact, useUpdateContact } from '@/hooks/useContacts';
 import { formatDate } from '@/utils/helpers';
 import { toast } from '@/hooks/use-toast';
 
@@ -50,11 +53,13 @@ export function ApplicationDetailPage() {
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [addContactOpen, setAddContactOpen] = useState(false);
   const [emailOpen, setEmailOpen] = useState(false);
+  const [editContact, setEditContact] = useState<Contact | null>(null);
 
   const { data: app, isLoading } = useApplication(id!);
   const { data: contacts } = useContacts({ applicationId: id });
   const deleteApplication = useDeleteApplication();
   const deleteContact = useDeleteContact();
+  const updateContact = useUpdateContact();
 
   const handleDelete = async () => {
     if (!id) return;
@@ -235,36 +240,69 @@ export function ApplicationDetailPage() {
             <div className="space-y-3">
               {contacts.map((contact) => (
                 <div key={contact.id} className="flex items-start justify-between gap-3 rounded-md border p-3">
-                  <div>
+                  <div className="space-y-0.5">
                     <p className="font-medium text-sm">{contact.name}</p>
                     {contact.title && (
                       <p className="text-xs text-muted-foreground">{contact.title}</p>
                     )}
-                    {contact.email && (
-                      <a
-                        href={`mailto:${contact.email}`}
-                        className="text-xs text-primary hover:underline"
-                      >
-                        {contact.email}
-                      </a>
-                    )}
+                    <div className="flex flex-wrap gap-3 pt-1">
+                      {contact.email && (
+                        <a href={`mailto:${contact.email}`} className="flex items-center gap-1 text-xs text-primary hover:underline">
+                          <Mail className="h-3 w-3" />
+                          {contact.email}
+                        </a>
+                      )}
+                      {contact.phone && (
+                        <a href={`tel:${contact.phone}`} className="flex items-center gap-1 text-xs text-primary hover:underline">
+                          <Phone className="h-3 w-3" />
+                          {contact.phone}
+                        </a>
+                      )}
+                    </div>
                   </div>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-7 w-7 shrink-0 text-muted-foreground hover:text-destructive"
-                    title="Delete contact"
-                    onClick={async () => {
-                      try {
-                        await deleteContact.mutateAsync(contact.id);
-                        toast({ title: 'Contact deleted' });
-                      } catch {
-                        toast({ variant: 'destructive', title: 'Failed to delete contact' });
-                      }
-                    }}
-                  >
-                    <Trash2 className="h-3.5 w-3.5" />
-                  </Button>
+                  <div className="flex gap-1 shrink-0">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-7 w-7 text-muted-foreground"
+                      title="Edit contact"
+                      onClick={() => setEditContact(contact)}
+                    >
+                      <Pencil className="h-3.5 w-3.5" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-7 w-7 text-muted-foreground hover:text-orange-500"
+                      title="Unlink from application"
+                      onClick={async () => {
+                        try {
+                          await updateContact.mutateAsync({ id: contact.id, data: { applicationId: null } });
+                          toast({ title: 'Contact unlinked' });
+                        } catch {
+                          toast({ variant: 'destructive', title: 'Failed to unlink contact' });
+                        }
+                      }}
+                    >
+                      <Unlink className="h-3.5 w-3.5" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-7 w-7 text-muted-foreground hover:text-destructive"
+                      title="Delete contact"
+                      onClick={async () => {
+                        try {
+                          await deleteContact.mutateAsync(contact.id);
+                          toast({ title: 'Contact deleted' });
+                        } catch {
+                          toast({ variant: 'destructive', title: 'Failed to delete contact' });
+                        }
+                      }}
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </Button>
+                  </div>
                 </div>
               ))}
             </div>
@@ -311,6 +349,18 @@ export function ApplicationDetailPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Edit Contact Dialog */}
+      <Dialog open={!!editContact} onOpenChange={(v) => { if (!v) setEditContact(null); }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Edit Contact</DialogTitle>
+          </DialogHeader>
+          {editContact && (
+            <ContactForm contact={editContact} onSuccess={() => setEditContact(null)} />
+          )}
+        </DialogContent>
+      </Dialog>
 
       {/* Add Contact Dialog */}
       <Dialog open={addContactOpen} onOpenChange={setAddContactOpen}>
