@@ -13,6 +13,7 @@ import contactRoutes from './routes/contacts.routes';
 import statsRoutes from './routes/stats.routes';
 import gmailRoutes from './routes/gmail.routes';
 import emailRoutes from './routes/email.routes';
+import adminRoutes from './routes/admin.routes';
 import { startEmailWorker } from './workers/emailWorker';
 
 const app = express();
@@ -42,6 +43,7 @@ app.use('/api/contacts', contactRoutes);
 app.use('/api/stats', statsRoutes);
 app.use('/api/gmail', gmailRoutes);
 app.use('/api/emails', emailRoutes);
+app.use('/api/admin', adminRoutes);
 
 // 404 handler
 app.use((_req, res) => {

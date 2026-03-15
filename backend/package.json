@@ -2,6 +2,9 @@
   "name": "track-job-backend",
   "version": "1.0.0",
   "private": true,
+  "prisma": {
+    "seed": "ts-node prisma/seed.ts"
+  },
   "scripts": {
     "dev": "nodemon",
     "build": "tsc --project tsconfig.json",

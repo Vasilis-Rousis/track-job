@@ -7,10 +7,15 @@ export type ApplicationStatus =
   | 'REJECTED'
   | 'WITHDRAWN';
 
+export type UserRole = 'USER' | 'ADMIN';
+export type UserStatusType = 'PENDING' | 'APPROVED' | 'REJECTED';
+
 export interface User {
   id: string;
   email: string;
   name: string;
+  role?: UserRole;
+  status?: UserStatusType;
   createdAt: string;
 }
 

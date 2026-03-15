@@ -5,6 +5,7 @@ import {
   Users,
   Mail,
   LogOut,
+  Shield,
 } from 'lucide-react';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
@@ -18,6 +19,8 @@ const navItems = [
   { to: '/contacts', label: 'Contacts', icon: Users, end: false },
   { to: '/emails', label: 'Emails', icon: Mail, end: false },
 ];
+
+const adminNavItem = { to: '/admin', label: 'Admin', icon: Shield, end: false };
 
 export function Sidebar() {
   const { user, logout } = useAuthStore();
@@ -38,7 +41,7 @@ export function Sidebar() {
 
       {/* Nav */}
       <nav className="flex-1 space-y-1 p-4">
-        {navItems.map(({ to, label, icon: Icon, end }) => (
+        {[...navItems, ...(user?.role === 'ADMIN' ? [adminNavItem] : [])].map(({ to, label, icon: Icon, end }) => (
           <NavLink
             key={to}
             to={to}

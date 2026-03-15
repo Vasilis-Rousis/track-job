@@ -1,14 +1,14 @@
+import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { Link, useNavigate } from 'react-router-dom';
-import { Briefcase, Loader2 } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { Briefcase, Loader2, CheckCircle2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { PasswordInput } from '@/components/ui/password-input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { useAuthStore } from '@/store/authStore';
 import { authApi } from '@/api/auth.api';
 import { toast } from '@/hooks/use-toast';
 import { getAxiosErrorMessage } from '@/utils/helpers';
@@ -22,8 +22,7 @@ const schema = z.object({
 type FormData = z.infer<typeof schema>;
 
 export function RegisterPage() {
-  const { setAuth } = useAuthStore();
-  const navigate = useNavigate();
+  const [submitted, setSubmitted] = useState(false);
 
   const {
     register,
@@ -33,9 +32,8 @@ export function RegisterPage() {
 
   const onSubmit = async (data: FormData) => {
     try {
-      const result = await authApi.register(data);
-      setAuth(result.user, result.token);
-      navigate('/');
+      await authApi.register(data);
+      setSubmitted(true);
     } catch (err) {
       toast({
         variant: 'destructive',
@@ -44,6 +42,29 @@ export function RegisterPage() {
       });
     }
   };
+
+  if (submitted) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-muted/30 p-4">
+        <Card className="w-full max-w-sm">
+          <CardHeader className="text-center">
+            <div className="mx-auto mb-2 flex h-12 w-12 items-center justify-center rounded-full bg-green-100 dark:bg-green-900/30">
+              <CheckCircle2 className="h-6 w-6 text-green-600 dark:text-green-400" />
+            </div>
+            <CardTitle>Account created</CardTitle>
+            <CardDescription>
+              Your account is pending admin approval. You'll be able to log in once approved.
+            </CardDescription>
+          </CardHeader>
+          <CardFooter className="justify-center">
+            <Link to="/login" className="text-sm text-primary hover:underline">
+              Back to sign in
+            </Link>
+          </CardFooter>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-muted/30 p-4">

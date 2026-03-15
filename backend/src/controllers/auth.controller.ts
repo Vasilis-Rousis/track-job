@@ -5,13 +5,57 @@ import { prisma } from '../config/db';
 import { env } from '../config/env';
 import { AppError } from '../middleware/errorHandler';
 import { asyncHandler } from '../middleware/asyncHandler';
+import { oauth2Client, buildRawMessage } from '../config/gmail';
+import { google } from 'googleapis';
 
 const USER_SELECT = {
   id: true,
   email: true,
   name: true,
+  role: true,
+  status: true,
   createdAt: true,
 } as const;
+
+async function notifyAdminOfRegistration(userName: string, userEmail: string) {
+  if (!env.ADMIN_EMAIL) return;
+
+  try {
+    const adminUser = await prisma.user.findFirst({
+      where: { role: 'ADMIN' },
+      include: { gmailCredential: true },
+    });
+
+    if (!adminUser?.gmailCredential) {
+      console.log('Admin Gmail not connected — skipping registration notification email.');
+      return;
+    }
+
+    const { accessToken, refreshToken, expiresAt } = adminUser.gmailCredential;
+    oauth2Client.setCredentials({
+      access_token: accessToken,
+      refresh_token: refreshToken,
+      expiry_date: expiresAt.getTime(),
+    });
+
+    const gmail = google.gmail({ version: 'v1', auth: oauth2Client });
+    const raw = buildRawMessage(
+      adminUser.gmailCredential.gmailAddress,
+      env.ADMIN_EMAIL,
+      `JobTracker: New registration from ${userName}`,
+      `A new user has registered and is awaiting your approval.\n\nName: ${userName}\nEmail: ${userEmail}\n\nLog in to the admin dashboard to approve or reject this request.`
+    );
+
+    await gmail.users.messages.send({
+      userId: 'me',
+      requestBody: { raw },
+    });
+
+    console.log(`Registration notification sent to ${env.ADMIN_EMAIL}`);
+  } catch (err) {
+    console.error('Failed to send registration notification email:', err);
+  }
+}
 
 export const register = asyncHandler(async (req: Request, res: Response) => {
   const { email, password, name } = req.body as {
@@ -24,18 +68,14 @@ export const register = asyncHandler(async (req: Request, res: Response) => {
   if (existing) throw new AppError(409, 'Email already registered');
 
   const passwordHash = await bcrypt.hash(password, 10);
-  const user = await prisma.user.create({
+  await prisma.user.create({
     data: { email, passwordHash, name },
-    select: USER_SELECT,
   });
 
-  const token = jwt.sign(
-    { userId: user.id, email: user.email, name: user.name },
-    env.JWT_SECRET,
-    { expiresIn: env.JWT_EXPIRES_IN as jwt.SignOptions['expiresIn'] }
-  );
+  // Send notification to admin (fire-and-forget)
+  notifyAdminOfRegistration(name, email);
 
-  res.status(201).json({ token, user });
+  res.status(201).json({ message: 'Account created. Awaiting admin approval.' });
 });
 
 export const login = asyncHandler(async (req: Request, res: Response) => {
@@ -51,15 +91,30 @@ export const login = asyncHandler(async (req: Request, res: Response) => {
     throw new AppError(401, 'Invalid email or password');
   }
 
+  if (user.status === 'PENDING') {
+    throw new AppError(403, 'Your account is pending admin approval.');
+  }
+
+  if (user.status === 'REJECTED') {
+    throw new AppError(403, 'Your registration request was denied.');
+  }
+
   const token = jwt.sign(
-    { userId: user.id, email: user.email, name: user.name },
+    { userId: user.id, email: user.email, name: user.name, role: user.role },
     env.JWT_SECRET,
     { expiresIn: env.JWT_EXPIRES_IN as jwt.SignOptions['expiresIn'] }
   );
 
   res.json({
     token,
-    user: { id: user.id, email: user.email, name: user.name, createdAt: user.createdAt },
+    user: {
+      id: user.id,
+      email: user.email,
+      name: user.name,
+      role: user.role,
+      status: user.status,
+      createdAt: user.createdAt,
+    },
   });
 });
 

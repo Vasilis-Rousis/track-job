@@ -13,6 +13,7 @@ const envSchema = z.object({
   GOOGLE_CLIENT_ID: z.string().default(''),
   GOOGLE_CLIENT_SECRET: z.string().default(''),
   GOOGLE_REDIRECT_URI: z.string().default('http://localhost:3000/api/gmail/callback'),
+  ADMIN_EMAIL: z.string().email().optional().or(z.literal('')).default(''),
 });
 
 const parsed = envSchema.safeParse(process.env);
