@@ -38,3 +38,12 @@ export const updateEmailSchema = z.object({
 });
 
 export type UpdateEmailInput = z.infer<typeof updateEmailSchema>;
+
+export const sendNowSchema = z.object({
+  applicationId: z.string().cuid(),
+  contactIds: z.array(z.string().cuid()).min(1, 'Select at least one contact'),
+  subject: z.string().min(1, 'Subject is required').max(500),
+  body: z.string().min(1, 'Body is required').max(50000),
+});
+
+export type SendNowInput = z.infer<typeof sendNowSchema>;

@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { emailsApi, gmailApi, type ScheduleEmailData, type UpdateEmailData } from '@/api/emails.api';
+import { emailsApi, gmailApi, type ScheduleEmailData, type UpdateEmailData, type SendNowData } from '@/api/emails.api';
 
 export const EMAILS_KEY = ['emails'] as const;
 export const GMAIL_STATUS_KEY = ['gmail-status'] as const;
@@ -9,6 +9,16 @@ export function useScheduledEmails(params?: { applicationId?: string }) {
     queryKey: [...EMAILS_KEY, params],
     queryFn: () => emailsApi.list(params),
     staleTime: 1000 * 30,
+  });
+}
+
+export function useSendNow() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (data: SendNowData) => emailsApi.sendNow(data),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: EMAILS_KEY });
+    },
   });
 }
 

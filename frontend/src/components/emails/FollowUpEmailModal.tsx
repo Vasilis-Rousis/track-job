@@ -17,7 +17,7 @@ import {
 import { DialogFooter } from '@/components/ui/dialog';
 import type { Application } from '@/types';
 import { useContacts } from '@/hooks/useContacts';
-import { useGmailStatus, useScheduleEmail } from '@/hooks/useEmails';
+import { useGmailStatus, useScheduleEmail, useSendNow } from '@/hooks/useEmails';
 import { useAuthStore } from '@/store/authStore';
 import { formatDate, formatDateInput, getAxiosErrorMessage } from '@/utils/helpers';
 import { toast } from '@/hooks/use-toast';
@@ -56,6 +56,7 @@ export function FollowUpEmailModal({ application, open, onOpenChange }: FollowUp
   const { data: gmailStatus, isLoading: gmailLoading } = useGmailStatus();
   const { data: allContacts = [] } = useContacts();
   const scheduleEmail = useScheduleEmail();
+  const sendNow = useSendNow();
 
   // Contacts linked to this application (for pre-selection and labelling)
   const linkedIds = new Set(
@@ -169,6 +170,26 @@ ${user?.name ?? ''}`;
         scheduledFor: new Date(`${data.scheduledFor}T${data.scheduledTime}:00`).toISOString(),
       });
       toast({ title: 'Follow-up email scheduled' });
+      onOpenChange(false);
+    } catch (err) {
+      toast({ variant: 'destructive', title: 'Error', description: getAxiosErrorMessage(err) });
+    }
+  };
+
+  const handleSendNow = async () => {
+    const values = watch();
+    if (values.contactIds.length === 0) {
+      toast({ variant: 'destructive', title: 'Error', description: 'Select at least one contact' });
+      return;
+    }
+    try {
+      await sendNow.mutateAsync({
+        applicationId: application.id,
+        contactIds: values.contactIds,
+        subject: values.subject,
+        body: values.body,
+      });
+      toast({ title: 'Email sent successfully' });
       onOpenChange(false);
     } catch (err) {
       toast({ variant: 'destructive', title: 'Error', description: getAxiosErrorMessage(err) });
@@ -337,6 +358,15 @@ ${user?.name ?? ''}`;
             </div>
 
             <DialogFooter>
+              <Button
+                type="button"
+                variant="outline"
+                disabled={sendNow.isPending}
+                onClick={handleSendNow}
+              >
+                {sendNow.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                Send now
+              </Button>
               <Button type="submit" disabled={isSubmitting || !isValid}>
                 {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                 Schedule email
